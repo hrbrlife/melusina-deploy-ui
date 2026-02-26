@@ -522,10 +522,11 @@ function deriveKh(){
 
 // ═══════════════ WALLET ═══════════════
 let cw=null;
-function detectW(){const m={phantom:window.solana?.isPhantom,solflare:window.solflare?.isSolflare,backpack:window.backpack};document.querySelectorAll('.wb').forEach(b=>b.classList.toggle('det',!!m[b.dataset.w]))}
+function getSolflare(){return window.solflare?.isSolflare?window.solflare:(window.solana?.isSolflare?window.solana:null)}
+function detectW(){const m={phantom:window.solana?.isPhantom&&!window.solana?.isSolflare,solflare:!!getSolflare(),backpack:!!window.backpack};document.querySelectorAll('.wb').forEach(b=>b.classList.toggle('det',!!m[b.dataset.w]))}
 async function connectW(n){
-  const p={phantom:window.solana,solflare:window.solflare,backpack:window.backpack}[n];
-  if(!p){toast('Wallet not detected');return}
+  const p={phantom:window.solana?.isPhantom&&!window.solana?.isSolflare?window.solana:null,solflare:getSolflare(),backpack:window.backpack}[n];
+  if(!p){toast(n+' wallet not detected — is the extension installed and enabled on this site?');return}
   try{const r=await p.connect(),pub=r.publicKey?.toBase58?.()||r.publicKey?.toString()||'';
     if(!pub)throw new Error('No key');cw={n,pub,p};
     document.getElementById('w-info').textContent=pub.slice(0,4)+'…'+pub.slice(-4);
