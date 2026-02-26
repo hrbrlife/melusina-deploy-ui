@@ -117,18 +117,6 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 .buy-btn:hover{background:#4eca5e}
 .buy-btn:disabled{opacity:.4;cursor:not-allowed}
 </style>
-<script>
-// Buffer polyfill for browser (only Buffer.from needed for PDA seeds & TX data)
-if(typeof globalThis.Buffer==='undefined'){
-  globalThis.Buffer={from:function(v){
-    if(typeof v==='string')return new Uint8Array([...new TextEncoder().encode(v)]);
-    if(v instanceof Uint8Array)return v;
-    if(v instanceof ArrayBuffer)return new Uint8Array(v);
-    if(Array.isArray(v))return new Uint8Array(v);
-    return new Uint8Array(v);
-  }};
-}
-</script>
 <script src="https://unpkg.com/@solana/web3.js@1.95.5/lib/index.iife.min.js"></script>
 </head>
 <body>
@@ -717,7 +705,7 @@ async function findAvailableEdition(){
   const conn=new W3.Connection(solUrl());
   for(const mint of KNOWN_EDITIONS){
     const mintPk=new W3.PublicKey(mint);
-    const [licensePda]=W3.PublicKey.findProgramAddressSync([Buffer.from('license'),mintPk.toBuffer()],prog);
+    const [licensePda]=W3.PublicKey.findProgramAddressSync([new TextEncoder().encode('license'),mintPk.toBuffer()],prog);
     const info=await conn.getAccountInfo(licensePda);
     if(!info){_selectedEdition=mint;return mint}
   }
@@ -767,17 +755,18 @@ async function purchaseLicense(){
     el.innerHTML+='<div style="color:var(--dm);font-size:.72rem;padding:2px 0">⏳ Building transaction (edition '+licMint.slice(0,8)+'…)…</div>';
 
     // Derive PDAs
-    const [registryPda]=W3.PublicKey.findProgramAddressSync([Buffer.from('registry'),masterMint.toBuffer()],prog);
-    const [resellerPda]=W3.PublicKey.findProgramAddressSync([Buffer.from('reseller'),resMintPk.toBuffer()],prog);
-    const [licensePda]=W3.PublicKey.findProgramAddressSync([Buffer.from('license'),licMintPk.toBuffer()],prog);
+    const _e=s=>new TextEncoder().encode(s);
+    const [registryPda]=W3.PublicKey.findProgramAddressSync([_e('registry'),masterMint.toBuffer()],prog);
+    const [resellerPda]=W3.PublicKey.findProgramAddressSync([_e('reseller'),resMintPk.toBuffer()],prog);
+    const [licensePda]=W3.PublicKey.findProgramAddressSync([_e('license'),licMintPk.toBuffer()],prog);
     const normDom=dom.replace(/\.$/,'').toLowerCase();
-    const domHash=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(normDom)));
-    const [domClaimPda]=W3.PublicKey.findProgramAddressSync([Buffer.from('domain_claim'),domHash],prog);
-    const [treasuryPda]=W3.PublicKey.findProgramAddressSync([Buffer.from('treasury'),masterMint.toBuffer()],prog);
+    const domHash=new Uint8Array(await crypto.subtle.digest('SHA-256',_e(normDom)));
+    const [domClaimPda]=W3.PublicKey.findProgramAddressSync([_e('domain_claim'),domHash],prog);
+    const [treasuryPda]=W3.PublicKey.findProgramAddressSync([_e('treasury'),masterMint.toBuffer()],prog);
     const [masterEdPda]=W3.PublicKey.findProgramAddressSync(
-      [Buffer.from('metadata'),metaProg.toBuffer(),masterMint.toBuffer(),Buffer.from('edition')],metaProg);
+      [_e('metadata'),metaProg.toBuffer(),masterMint.toBuffer(),_e('edition')],metaProg);
     const [licEdPda]=W3.PublicKey.findProgramAddressSync(
-      [Buffer.from('metadata'),metaProg.toBuffer(),licMintPk.toBuffer(),Buffer.from('edition')],metaProg);
+      [_e('metadata'),metaProg.toBuffer(),licMintPk.toBuffer(),_e('edition')],metaProg);
 
     // Anchor discriminator: SHA256("global:purchase_license_simple")[0..8]
     const discH=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('global:purchase_license_simple')));
@@ -820,7 +809,7 @@ async function purchaseLicense(){
       {pubkey:tokProg,isSigner:false,isWritable:false},
     ];
 
-    const ix=new W3.TransactionInstruction({programId:prog,keys,data:Buffer.from(data)});
+    const ix=new W3.TransactionInstruction({programId:prog,keys,data});
     const conn=new W3.Connection(solUrl());
     const {blockhash}=await conn.getLatestBlockhash();
     const tx=new W3.Transaction({recentBlockhash:blockhash,feePayer:buyerPk});
