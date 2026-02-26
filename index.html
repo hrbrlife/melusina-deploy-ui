@@ -569,8 +569,8 @@ async function browseHK(hid){
   else toast('Type the path manually')}
 
 // ═══════════════ SOLANA ON-CHAIN ═══════════════
-const PROG_ID='EFjd6AhLRE1curgyK5V6A1nediM2BEyzXo9fwEqNbnop';
-const KNOWN_MASTER='CnnETKyqcTLG1GTKibYjEv7vdXxPnwWAzLZTA81E5FRN';
+const PROG_ID='BSENx6t1GVPzhnnd4yiojxWk7HjKZiiRQEkriHg6Mpix';
+const KNOWN_MASTER='8kZ9GLytCBRyNqJjihnBsHK6c56DMjn6PAVdpegoR4bu';
 const B58C='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function b58d(s){const m=new Map();for(let i=0;i<58;i++)m.set(B58C[i],BigInt(i));let n=0n;for(const c of s)n=n*58n+(m.get(c)??0n);const b=[];while(n>0n){b.unshift(Number(n%256n));n/=256n}for(const c of s){if(c!=='1')break;b.unshift(0)}return new Uint8Array(b)}
 function b58e(b){if(!b.length)return'';let n=0n;for(const x of b)n=n*256n+BigInt(x);const c=[];while(n>0n){c.unshift(B58C[Number(n%58n)]);n/=58n}for(const x of b){if(x)break;c.unshift('1')}return c.join('')}
