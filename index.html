@@ -236,6 +236,8 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
     <span id="w-info" style="margin-left:auto;font-size:.74rem;color:var(--ac);font-family:monospace"></span>
     <button class="btn btn-s" id="w-dc" style="display:none;padding:4px 10px;font-size:.68rem" onclick="disconnectW()">Disconnect</button>
   </div>
+  <div id="w-det" style="font-size:.65rem;color:var(--dm);padding:2px 0">
+  </div>
   <div class="row">
     <div class="f"><label>Operator Wallet</label><input class="mono" data-k="OPERATOR_WALLET" placeholder="Solana pubkey"></div>
     <div class="f"><label>License NFT</label><input class="mono" data-k="MELUSINA_LICENSE_NFT" placeholder="NFT mint address"></div>
@@ -522,11 +524,21 @@ function deriveKh(){
 
 // ═══════════════ WALLET ═══════════════
 let cw=null;
-function getSolflare(){return window.solflare?.isSolflare?window.solflare:(window.solana?.isSolflare?window.solana:null)}
-function detectW(){const m={phantom:window.solana?.isPhantom&&!window.solana?.isSolflare,solflare:!!getSolflare(),backpack:!!window.backpack};document.querySelectorAll('.wb').forEach(b=>b.classList.toggle('det',!!m[b.dataset.w]))}
+function getWalletProvider(n){
+  if(n==='phantom') return window.phantom?.solana||((window.solana?.isPhantom&&!window.solana?.isSolflare)?window.solana:null);
+  if(n==='solflare') return window.solflare?.isSolflare?window.solflare:(window.solana?.isSolflare?window.solana:null);
+  if(n==='backpack') return window.backpack||window.xnft?.solana||null;
+  return null;
+}
+function detectW(){const m={phantom:!!getWalletProvider('phantom'),solflare:!!getWalletProvider('solflare'),backpack:!!getWalletProvider('backpack')};
+  document.querySelectorAll('.wb').forEach(b=>{b.classList.toggle('det',!!m[b.dataset.w])});
+  const info=document.getElementById('w-det');
+  if(info){const found=Object.entries(m).filter(([,v])=>v).map(([k])=>k);
+    info.textContent=found.length?'Detected: '+found.join(', '):'No wallets detected — install Phantom or Solflare extension'}
+}
 async function connectW(n){
-  const p={phantom:window.solana?.isPhantom&&!window.solana?.isSolflare?window.solana:null,solflare:getSolflare(),backpack:window.backpack}[n];
-  if(!p){toast(n+' wallet not detected — is the extension installed and enabled on this site?');return}
+  const p=getWalletProvider(n);
+  if(!p){toast(n+' wallet not detected — is the browser extension installed and enabled on this site? Try refreshing.');return}
   try{const r=await p.connect(),pub=r.publicKey?.toBase58?.()||r.publicKey?.toString()||'';
     if(!pub)throw new Error('No key');cw={n,pub,p};
     document.getElementById('w-info').textContent=pub.slice(0,4)+'…'+pub.slice(-4);
@@ -534,8 +546,13 @@ async function connectW(n){
     document.querySelectorAll('.wb').forEach(b=>b.classList.toggle('on',b.dataset.w===n));
     const op=document.querySelector('[data-k="OPERATOR_WALLET"]');
     if(op&&!op.value){op.value=pub;S.v.OPERATOR_WALLET=pub;save()}
-    toast('Connected');
+    toast('Connected: '+pub.slice(0,6)+'…');
+    if(S.v.MELUSINA_DOMAIN)debounceLicenseCheck();
   }catch(e){toast('Failed: '+e.message)}
+}
+async function autoConnect(){
+  for(const n of['solflare','phantom','backpack']){const p=getWalletProvider(n);if(p){try{await connectW(n);return true}catch(e){}}}
+  return false;
 }
 function disconnectW(){if(cw?.p?.disconnect)cw.p.disconnect();cw=null;
   document.getElementById('w-info').textContent='';document.getElementById('w-dc').style.display='none';
@@ -670,7 +687,7 @@ const METADATA_PROG_ID='metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
 const TOKEN_PROG_ID='TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 
 async function purchaseLicense(){
-  if(!cw){toast('Connect wallet first');return}
+  if(!cw){toast('Connecting wallet…');if(!await autoConnect()){toast('No wallet found — click Phantom/Solflare button above to connect, or install a Solana wallet extension');return}}
   const dom=(S.v.MELUSINA_DOMAIN||'').trim().toLowerCase();
   if(!dom||!dom.includes('.')){toast('Enter a domain first');return}
   const resMint=S.v.RESELLER_NFT_MINT;
@@ -928,6 +945,8 @@ function boot(){
   document.querySelectorAll('.tgl[data-k]').forEach(b=>b.classList.toggle('on',S.v[b.dataset.k]==='true'));
   detectW();renderResellers();
   if(S.v.MELUSINA_DOMAIN)debounceLicenseCheck();
+  // Re-detect wallets after extensions have time to inject (some are slow)
+  setTimeout(detectW,1000);setTimeout(detectW,3000);
 }
 load();boot();
 </script>
