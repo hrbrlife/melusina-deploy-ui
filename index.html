@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Melusina Deploy Configurator</title>
+<style>
+:root{--bg:#0d1117;--s1:#161b22;--s2:#1c2333;--bd:#30363d;--bd2:#444c56;
+--tx:#e6edf3;--dm:#8b949e;--ac:#58a6ff;--ac2:#1f6feb;--gn:#3fb950;
+--rd:#f85149;--or:#d29922;--pu:#bc8cff;--tl:#39d2c0;--r:10px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);line-height:1.5}
+.w{max-width:880px;margin:0 auto;padding:20px 20px 80px}
+.hero{text-align:center;padding:28px 0 20px}
+.hero h1{font-size:1.7rem;font-weight:700;background:linear-gradient(135deg,var(--ac),var(--pu));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--dm);font-size:.85rem;margin-top:4px}
+.hero-bar{display:flex;gap:8px;justify-content:center;margin-top:12px}
+.hero-bar button{background:var(--s1);color:var(--dm);border:1px solid var(--bd);border-radius:6px;padding:5px 14px;font-size:.75rem;cursor:pointer}
+.hero-bar button:hover{color:var(--tx);border-color:var(--ac)}
+.sec{margin-top:28px}.sec-t{font-size:.68rem;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:2px}
+.pick3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pk{display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px 14px;
+background:var(--s2);border:2px solid var(--bd);border-radius:var(--r);cursor:pointer;text-align:center;transition:.15s;position:relative}
+.pk:hover{border-color:var(--ac);transform:translateY(-1px)}
+.pk.on{border-color:var(--ac);background:rgba(88,166,255,.07)}
+.pk .dot{position:absolute;top:8px;right:10px;width:18px;height:18px;border-radius:50%;border:2px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:transparent;transition:.15s}
+.pk.on .dot{border-color:var(--ac);background:var(--ac);color:#000}
+.pk-i{font-size:2rem}.pk-l{font-size:.85rem;font-weight:600}.pk-d{font-size:.7rem;color:var(--dm);line-height:1.35}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sv{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--s2);border:1.5px solid var(--bd);border-radius:var(--r);transition:.15s;cursor:pointer;user-select:none}
+.sv:hover{border-color:var(--bd2)}.sv.on{border-color:var(--gn);background:rgba(63,185,80,.05)}
+.sv.lock{cursor:default;opacity:.9}.sv.lock.on{opacity:1}
+.sv-i{font-size:1.3rem;flex-shrink:0}.sv-n{font-size:.82rem;font-weight:600}.sv-d{font-size:.68rem;color:var(--dm)}
+.sv-info{flex:1;min-width:0}
+.sv-tag{font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:8px;text-transform:uppercase;letter-spacing:.3px}
+.sv-tag.r{background:rgba(248,81,73,.12);color:var(--rd)}.sv-tag.o{background:rgba(139,148,158,.1);color:var(--dm)}
+.sw{width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;position:relative;transition:.2s;flex-shrink:0;background:var(--bd)}
+.sw.on{background:var(--gn)}.sw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}.sw.on::after{left:18px}
+.sw.lock{opacity:.4;cursor:not-allowed}
+.topo{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:20px;position:relative}
+.topo-h{font-size:.75rem;color:var(--dm);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.topo-h span{font-size:.68rem;color:var(--dm);font-style:italic}
+.t-row{display:flex;align-items:stretch;gap:0;justify-content:center}
+.t-n{display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 18px;background:var(--s2);border:2px solid var(--bd);border-radius:var(--r);min-width:150px;text-align:center;cursor:pointer;transition:.15s}
+.t-n:hover{border-color:var(--bd2)}
+.t-n.gw{border-color:var(--or)}.t-n.sv{border-color:var(--ac)}.t-n.sc{border-color:var(--pu)}
+.t-i{font-size:1.4rem}.t-l{font-size:.78rem;font-weight:600}.t-m{font-size:.65rem;color:var(--dm)}
+.t-link{display:flex;flex-direction:column;align-items:center;justify-content:center;width:56px;position:relative}
+.t-link::before{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:var(--bd2)}
+.t-link-tag{font-size:.55rem;color:var(--dm);background:var(--s1);padding:0 4px;z-index:1;white-space:nowrap}
+.t-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;min-height:24px;padding:5px;border:1.5px dashed transparent;border-radius:6px;transition:.15s;justify-content:center}
+.t-pills.drop{border-color:var(--bd2)}.t-pills.drag-over{border-color:var(--ac);background:rgba(88,166,255,.06)}
+.pill{padding:3px 8px;border-radius:10px;font-size:.65rem;font-weight:600;cursor:grab;user-select:none;transition:.12s}
+.pill.dragging{opacity:.3}
+.pill[data-s="WATCHDOG"]{background:rgba(63,185,80,.15);color:var(--gn)}
+.pill[data-s="MERMAIL"]{background:rgba(88,166,255,.15);color:var(--ac)}
+.pill[data-s="AILAGOON"]{background:rgba(57,210,192,.15);color:var(--tl)}
+.pill[data-s="VINTAGE"]{background:rgba(188,140,255,.15);color:var(--pu)}
+.pill[data-s="SCREENING"]{background:rgba(210,153,34,.15);color:var(--or)}
+.t-sc-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.t-add{display:flex;gap:8px;justify-content:center;margin-top:14px}
+.t-add button{padding:6px 14px;background:var(--s2);border:1.5px dashed var(--bd2);border-radius:8px;color:var(--dm);cursor:pointer;font-size:.74rem}
+.t-add button:hover{border-color:var(--ac);color:var(--ac)}
+.t-n .t-rm{position:absolute;top:5px;right:7px;background:none;border:none;color:var(--dm);cursor:pointer;font-size:.75rem}.t-n .t-rm:hover{color:var(--rd)}
+.cfg{margin-top:12px;padding:16px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);animation:fadeIn .15s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.cfg h4{font-size:.82rem;font-weight:600;margin-bottom:8px}
+.f{margin-bottom:10px}
+.f label{display:block;font-size:.7rem;font-weight:600;color:var(--dm);margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px}
+.f input,.f select,.f textarea{width:100%;padding:8px 10px;background:var(--s1);border:1px solid var(--bd);border-radius:6px;color:var(--tx);font-size:.82rem;font-family:inherit}
+.f input:focus,.f textarea:focus{outline:none;border-color:var(--ac)}
+.f textarea{resize:vertical;min-height:60px;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.78rem}
+.f .h{font-size:.65rem;color:var(--dm);margin-top:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.mono{font-family:'SF Mono',Monaco,Consolas,monospace}
+.br{display:flex;gap:6px;align-items:end}
+.br .f{flex:1}
+.brb{padding:8px 12px;background:var(--ac2);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.72rem;font-weight:600;white-space:nowrap}.brb:hover{background:var(--ac)}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-top:16px}
+.card-t{font-size:.82rem;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.chs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.ch{padding:6px 14px;background:var(--s2);border:1.5px solid var(--bd);border-radius:16px;cursor:pointer;font-size:.78rem;transition:.12s;user-select:none}
+.ch:hover{border-color:var(--ac)}.ch.on{border-color:var(--ac);background:rgba(88,166,255,.1);color:var(--ac);font-weight:600}
+.tr{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)}
+.tr:last-child{border-bottom:none}
+.tr-l{font-size:.82rem}.tr-d{font-size:.68rem;color:var(--dm)}
+.tgl{width:40px;height:22px;border-radius:11px;border:none;cursor:pointer;position:relative;transition:.2s;flex-shrink:0;background:var(--bd)}
+.tgl.on{background:var(--gn)}
+.tgl::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s}.tgl.on::after{left:20px}
+.wbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.wb{padding:6px 12px;border-radius:7px;border:1.5px solid var(--bd);background:var(--s2);color:var(--dm);cursor:pointer;font-size:.74rem;font-weight:600;transition:.12s}
+.wb:hover{border-color:var(--ac);color:var(--tx)}.wb.on{border-color:var(--gn);color:var(--gn)}
+.wb.det::before{content:'●';margin-right:4px;color:var(--gn);font-size:.5rem}
+.cond{display:none}.cond.show{display:block}
+.dns-r{display:grid;grid-template-columns:2fr 1fr 3fr auto;gap:6px;align-items:end;margin-bottom:6px}
+.dns-r .f{margin-bottom:0}
+.xbtn{background:none;border:none;color:var(--dm);cursor:pointer;font-size:.9rem;padding:2px}.xbtn:hover{color:var(--rd)}
+.cks{list-style:none;max-height:280px;overflow-y:auto}
+.cks li{display:flex;align-items:center;gap:7px;padding:5px 0;font-size:.78rem;border-bottom:1px solid var(--bd)}
+.ck{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0}
+.ck.p{background:rgba(63,185,80,.12);color:var(--gn)}.ck.f{background:rgba(248,81,73,.12);color:var(--rd)}.ck.w{background:rgba(210,153,34,.12);color:var(--or)}
+.ebar{display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-size:.82rem;font-weight:600;transition:.12s}
+.btn-p{background:var(--ac2);color:#fff}.btn-p:hover{background:var(--ac)}
+.btn-s{background:var(--s2);color:var(--tx);border:1px solid var(--bd)}.btn-s:hover{border-color:var(--ac)}
+#env-out{display:none;width:100%;max-height:380px;overflow:auto;padding:12px;background:#0a0e14;border:1px solid var(--bd);border-radius:var(--r);font-family:monospace;font-size:.74rem;white-space:pre;color:var(--dm);margin-top:12px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--s2);color:var(--tx);padding:8px 22px;border-radius:8px;border:1px solid var(--bd);font-size:.8rem;z-index:9999;transition:.25s;opacity:0;pointer-events:none}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:var(--dm);padding:5px 0}details summary:hover{color:var(--ac)}details[open] summary{color:var(--ac);margin-bottom:6px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+@media(max-width:640px){.pick3,.sg{grid-template-columns:1fr}.row,.row3{grid-template-columns:1fr}.dns-r{grid-template-columns:1fr}}
+.buy-box{margin-top:8px;padding:12px;background:rgba(88,166,255,.05);border:1px solid var(--ac);border-radius:var(--r)}
+.buy-box .buy-t{font-size:.78rem;font-weight:600;color:var(--ac);margin-bottom:6px}
+.buy-box .buy-d{font-size:.72rem;color:var(--dm);margin-bottom:8px}
+.buy-box .buy-p{font-size:1rem;font-weight:700;color:var(--gn);margin-bottom:8px}
+.buy-btn{padding:8px 20px;background:var(--gn);color:#000;border:none;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:700;transition:.12s}
+.buy-btn:hover{background:#4eca5e}
+.buy-btn:disabled{opacity:.4;cursor:not-allowed}
+</style>
+<script src="https://unpkg.com/@solana/web3.js@1.95.5/lib/index.iife.min.js"></script>
+</head>
+<body>
+<div class="w">
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Melusina Deploy Configurator</h1>
+  <p>Build your deployment.env — the deploy script handles everything else.</p>
+  <div class="hero-bar">
+    <button onclick="document.getElementById('imp').click()">Import .env</button>
+    <input type="file" id="imp" accept=".env,.txt" style="display:none" onchange="importFile(this)">
+    <button onclick="resetAll()">Reset</button>
+  </div>
+</div>
+
+<!-- 1. DOMAIN — the most important thing -->
+<div class="sec"><div class="sec-t">Deployment Domain</div>
+<div class="card">
+  <div class="f"><label>Domain</label><input data-k="MELUSINA_DOMAIN" placeholder="app.melusina-os.org" oninput="deriveDns();debounceLicenseCheck()"></div>
+  <div id="dns-derived"></div>
+  <div id="license-check" style="margin-top:8px"></div>
+  <div class="chs" style="margin-top:8px">
+    <div class="ch on" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="subdomain" onclick="pickR(this)">Subdomain</div>
+    <div class="ch" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="full" onclick="pickR(this)">Full Zone</div>
+  </div>
+  <details><summary>Extra DNS records</summary>
+    <div class="f"><label>One record per line</label><textarea data-k="EXTRA_DNS" placeholder="mail  A  1.2.3.4&#10;_dmarc  TXT  v=DMARC1; p=none&#10;mx  MX  10 mail.example.com" style="min-height:80px"></textarea>
+      <div class="h">Format: name  type  value (space or tab separated)</div></div>
+  </details>
+</div>
+</div>
+
+<!-- 2. RESELLER & NETWORK -->
+<div class="sec"><div class="sec-t">Reseller &amp; Network</div>
+<div class="card">
+  <div class="chs" style="margin-bottom:10px">
+    <div class="ch on" data-r="BLOCKCHAIN_NETWORK" data-v="devnet" onclick="pickR(this);debounceLicenseCheck()">Devnet</div>
+    <div class="ch" data-r="BLOCKCHAIN_NETWORK" data-v="mainnet-beta" onclick="pickR(this);debounceLicenseCheck()">Mainnet</div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span style="font-size:.75rem;color:var(--dm)">Select your reseller (by NFT common name)</span>
+    <button class="brb" onclick="fetchResellers()" style="padding:4px 10px;font-size:.7rem">Fetch Resellers</button>
+  </div>
+  <div id="reseller-list"></div>
+</div>
+</div>
+
+<!-- 3. WHERE ARE YOU DEPLOYING FROM -->
+<div class="sec"><div class="sec-t">Where are you deploying from?</div>
+<div class="pick3" id="target-pick">
+  <div class="pk" onclick="pickTarget('local')" data-t="local">
+    <div class="dot">✓</div><div class="pk-i">🖥️</div>
+    <div class="pk-l">This Machine</div>
+    <div class="pk-d">Server runs right here.<br>No SSH needed.</div></div>
+  <div class="pk" onclick="pickTarget('remote_from')" data-t="remote_from">
+    <div class="dot">✓</div><div class="pk-i">🚀</div>
+    <div class="pk-l">Remote — Deploy From Here</div>
+    <div class="pk-d">Your workstation pushes<br>to a remote server via SSH.</div></div>
+  <div class="pk" onclick="pickTarget('remote_on')" data-t="remote_on">
+    <div class="dot">✓</div><div class="pk-i">📦</div>
+    <div class="pk-l">Carry &amp; Install</div>
+    <div class="pk-d">Take the .env and package to<br>the target machine, run there.</div></div>
+</div>
+</div>
+
+<!-- PACKAGE SOURCE — store (via reseller) or local bundle -->
+<div class="sec" style="margin-top:16px"><div class="sec-t">Package Source</div>
+<div class="card">
+  <div class="chs">
+    <div class="ch" data-r="SOURCE_MODE" data-v="store" onclick="pickR(this);updateStoreStatus()">Download from Store</div>
+    <div class="ch on" data-r="SOURCE_MODE" data-v="local" onclick="pickR(this)">Local Bundle</div>
+  </div>
+  <div class="cond" data-show="v:SOURCE_MODE:store">
+    <div id="store-status" style="padding:8px 12px;background:var(--s2);border-radius:8px;font-size:.75rem"></div>
+  </div>
+  <div class="cond show" data-show="v:SOURCE_MODE:local">
+    <div class="br"><div class="f"><label>Bundle path (.tar.xz)</label><input data-k="MELUSINA_SANDSTORM_BUNDLE" placeholder="../sandstorm/sandstorm-0-fast.tar.xz"></div>
+      <button class="brb" onclick="browse('MELUSINA_SANDSTORM_BUNDLE','.tar.xz,.tar')">Browse</button></div>
+    <div class="h" style="font-size:.68rem;color:var(--dm);margin-top:4px">If empty the deploy script builds from the sandstorm/ directory.</div>
+  </div>
+</div>
+</div>
+
+<!-- 3. SERVICES -->
+<div class="sec"><div class="sec-t">Services</div>
+<div class="sg" id="svc-grid">
+  <div class="sv lock on" data-s="WATCHDOG"><div class="sv-i">🐺</div><div class="sv-info"><div class="sv-n">Wolfdog</div><div class="sv-d">Monitoring &amp; health</div></div><span class="sv-tag r">Required</span><button class="sw on lock"></button></div>
+  <div class="sv lock on" data-s="BACKUP"><div class="sv-i">💾</div><div class="sv-info"><div class="sv-n">Backup</div><div class="sv-d">Encrypted daily backups</div></div><span class="sv-tag r">Required</span><button class="sw on lock"></button></div>
+  <div class="sv" data-s="MERMAIL" onclick="toggleSvc('MERMAIL')"><div class="sv-i">📧</div><div class="sv-info"><div class="sv-n">MerMail</div><div class="sv-d">Outbound email</div></div><span class="sv-tag o">Optional</span><button class="sw" id="sw-MERMAIL"></button></div>
+  <div class="sv" data-s="AILAGOON" onclick="toggleSvc('AILAGOON')"><div class="sv-i">🤖</div><div class="sv-info"><div class="sv-n">AiLagoon</div><div class="sv-d">Local AI proxy</div></div><span class="sv-tag o">Optional</span><button class="sw" id="sw-AILAGOON"></button></div>
+  <div class="sv" data-s="VINTAGE" onclick="toggleSvc('VINTAGE')"><div class="sv-i">🖥️</div><div class="sv-info"><div class="sv-n">Vintage</div><div class="sv-d">Virtual desktop</div></div><span class="sv-tag o">Optional</span><button class="sw" id="sw-VINTAGE"></button></div>
+  <div class="sv" data-s="SCREENING" onclick="toggleSvc('SCREENING')"><div class="sv-i">🔍</div><div class="sv-info"><div class="sv-n">TeleScreen</div><div class="sv-d">Sanctions &amp; reputation</div></div><span class="sv-tag o">Optional</span><button class="sw" id="sw-SCREENING"></button></div>
+</div>
+</div>
+
+<!-- 4. TOPOLOGY — click nodes to set IPs, drag sidecars between hosts -->
+<div class="sec"><div class="sec-t">Network Topology</div>
+<div class="topo" id="topo">
+  <div class="topo-h"><span>Click a node to set IPs &amp; SSH · Drag sidecars between hosts</span></div>
+  <div id="topo-vis"></div>
+  <div class="t-add">
+    <button onclick="addHost('local')">＋ Sidecar Host (Local)</button>
+    <button onclick="addHost('remote')">＋ Sidecar Host (Remote)</button>
+  </div>
+</div>
+<div id="topo-cfg"></div>
+</div>
+
+<!-- 5. LICENSE & IDENTITY (merged, simplified) -->
+<div class="sec"><div class="sec-t">License &amp; Identity</div>
+<div class="card">
+  <div class="wbar">
+    <button class="wb" data-w="phantom" onclick="connectW('phantom')">👻 Phantom</button>
+    <button class="wb" data-w="solflare" onclick="connectW('solflare')">🔆 Solflare</button>
+    <button class="wb" data-w="backpack" onclick="connectW('backpack')">🎒 Backpack</button>
+    <span id="w-info" style="margin-left:auto;font-size:.74rem;color:var(--ac);font-family:monospace"></span>
+    <button class="btn btn-s" id="w-dc" style="display:none;padding:4px 10px;font-size:.68rem" onclick="disconnectW()">Disconnect</button>
+  </div>
+  <div class="row">
+    <div class="f"><label>Operator Wallet</label><input class="mono" data-k="OPERATOR_WALLET" placeholder="Solana pubkey"></div>
+    <div class="f"><label>License NFT</label><input class="mono" data-k="MELUSINA_LICENSE_NFT" placeholder="NFT mint address"></div>
+  </div>
+  <div class="f"><label>Keyholders</label><textarea data-k="SOLANA_KEYHOLDERS" placeholder="One per line or comma-separated" oninput="deriveKh()"></textarea></div>
+  <div class="row">
+    <div class="f"><label>Unseal Threshold</label><input type="number" data-k="UNSEAL_THRESHOLD" placeholder="3" min="1" oninput="deriveKh()"></div>
+    <div id="kh-info" style="display:flex;flex-direction:column;justify-content:end;padding-bottom:10px"></div>
+  </div>
+  <details><summary>Squads Multisig, Program IDs &amp; RPC</summary>
+    <div class="row"><div class="f"><label>Multisig</label><input class="mono" data-k="SQUADS_MULTISIG"></div><div class="f"><label>Vault</label><input class="mono" data-k="SQUADS_VAULT"></div></div>
+    <div class="f"><label>Master NFT</label><input class="mono" data-k="MASTER_NFT_MINT"></div>
+    <div class="row"><div class="f"><label>Program ID</label><input data-k="MELUSINA_PROGRAM_ID"></div><div class="f"><label>Governance ID</label><input data-k="MELUSINA_GOVERNANCE_ID"></div></div>
+    <div class="row"><div class="f"><label>Helius API Key</label><input data-k="HELIUS_API_KEY"></div><div class="f"><label>Helius RPC</label><input data-k="HELIUS_RPC"></div></div>
+  </details>
+</div>
+</div>
+
+<!-- 6. OTP -->
+<div class="sec"><div class="sec-t">OTP via Telegram</div>
+<div class="card">
+  <div class="tr"><div><div class="tr-l">Enable phone verification at signup</div><div class="tr-d">Users verify via Telegram Gateway before creating an account</div></div>
+    <button class="tgl" id="tgl-otp" data-k="OTP_ENABLED" onclick="toggleK(this)"></button></div>
+  <div class="cond" data-show="v:OTP_ENABLED:true">
+    <div class="tr"><div><div class="tr-l">Enforce — cannot skip</div></div>
+      <button class="tgl" id="tgl-otp2" data-k="OTP_ENFORCED" onclick="toggleK(this)"></button></div>
+    <div class="f" style="margin-top:8px"><label>Telegram Gateway Token</label><input data-k="TELEGRAM_GATEWAY_TOKEN"></div>
+  </div>
+</div>
+</div>
+
+<!-- 7. MERMAIL (conditional on MerMail service) -->
+<div class="sec cond" data-show="svc:MERMAIL">
+<div class="sec-t">MerMail</div>
+<div class="card">
+  <div class="chs">
+    <div class="ch on" data-r="EMAIL_PROVIDER" data-v="ses" onclick="pickR(this)">AWS SES</div>
+    <div class="ch" data-r="EMAIL_PROVIDER" data-v="postmark" onclick="pickR(this)">Postmark</div>
+    <div class="ch" data-r="EMAIL_PROVIDER" data-v="smtp" onclick="pickR(this)">SMTP</div>
+  </div>
+  <div class="cond show" data-show="v:EMAIL_PROVIDER:ses">
+    <div class="row3"><div class="f"><label>Region</label><input data-k="AWS_SES_REGION" placeholder="eu-central-1"></div><div class="f"><label>SMTP User</label><input data-k="AWS_SES_SMTP_USER"></div><div class="f"><label>SMTP Pass</label><input type="password" data-k="AWS_SES_SMTP_PASS"></div></div>
+  </div>
+  <div class="cond" data-show="v:EMAIL_PROVIDER:postmark"><div class="f"><label>API Key</label><input data-k="POSTMARK_API_KEY"></div></div>
+  <div class="cond" data-show="v:EMAIL_PROVIDER:smtp">
+    <div class="row"><div class="f"><label>Host</label><input data-k="SMTP_FALLBACK_HOST"></div><div class="f"><label>Port</label><input data-k="SMTP_FALLBACK_PORT" placeholder="587"></div></div>
+    <div class="row"><div class="f"><label>User</label><input data-k="SMTP_FALLBACK_USER"></div><div class="f"><label>Pass</label><input type="password" data-k="SMTP_FALLBACK_PASS"></div></div>
+  </div>
+  <div class="row" style="margin-top:8px"><div class="f"><label>DKIM Selector</label><input data-k="DKIM_SELECTOR" placeholder="melusina">
+    <div class="h">Used for email signing — default "melusina"</div></div>
+    <div class="f"><label>Admin Token</label><input data-k="MERMAIL_ADMIN_TOKEN" placeholder="(auto-generated if empty)">
+    <div class="h">Token for Mermail admin API. Leave blank to auto-generate.</div></div></div>
+</div>
+</div>
+
+<!-- 8. MONITORING — wolfdog watchdog -->
+<div class="sec"><div class="sec-t">Monitoring</div>
+<div class="card">
+  <div class="row"><div class="f"><label>Watchdog Bot Token</label><input data-k="WATCHDOG_TG_TOKEN" placeholder="Telegram bot token for Wolfdog alerts"></div><div class="f"><label>Chat ID</label><input data-k="WATCHDOG_TG_CHAT_ID" placeholder="Telegram chat/group ID"></div></div>
+  <div class="f"><label>Admin Telegram IDs</label><input data-k="WATCHDOG_TG_ADMINS" placeholder="Comma-separated Telegram user IDs">
+    <div class="h">Admins who can interact with the watchdog bot</div></div>
+</div>
+</div>
+
+<!-- 9. ADVANCED -->
+<div class="sec"><div class="sec-t">Advanced</div>
+<div class="card">
+  <div class="tr"><div class="tr-l">Auto-boot on restart</div><button class="tgl on" data-k="MELUSINA_AUTO_BOOT" onclick="toggleK(this)"></button></div>
+  <div class="tr"><div class="tr-l">Auto-start sidecars</div><button class="tgl on" data-k="MELUSINA_SIDECAR_AUTOSTART" onclick="toggleK(this)"></button></div>
+  <div class="tr"><div class="tr-l">Manage parent zone DNS</div><button class="tgl" data-k="MANAGE_ZONE_DNS" onclick="toggleK(this)"></button></div>
+  <details><summary>WireGuard, timeouts, paths &amp; networking</summary>
+    <div class="row3"><div class="f"><label>WG Port</label><input type="number" data-k="MELUSINA_WG_PORT" placeholder="51820"></div><div class="f"><label>WG Gateway IP</label><input data-k="MELUSINA_WG_AWS_IP" placeholder="10.200.0.1"></div><div class="f"><label>WG VM IP</label><input data-k="MELUSINA_WG_VM_IP" placeholder="10.200.0.2"></div></div>
+    <div class="row3"><div class="f"><label>Deploy Timeout</label><input type="number" data-k="MELUSINA_DEPLOY_TIMEOUT" placeholder="600"></div><div class="f"><label>Health Interval</label><input type="number" data-k="MELUSINA_HEALTH_INTERVAL" placeholder="30"></div><div class="f"><label>DNS TTL</label><input type="number" data-k="MELUSINA_DNS_TTL" placeholder="300"></div></div>
+    <div class="row"><div class="f"><label>MTU</label><input type="number" data-k="MELUSINA_MTU" placeholder="1420"></div><div class="f"><label>Cert Email</label><input data-k="MELUSINA_CERT_EMAIL"></div></div>
+    <div class="row"><div class="f"><label>Log Dir</label><input data-k="MELUSINA_LOG_DIR" placeholder="/var/log/melusina"></div><div class="f"><label>Backup Dir</label><input data-k="MELUSINA_BACKUP_DIR" placeholder="/mnt/backups"></div></div>
+  </details>
+</div>
+</div>
+
+<!-- 10. GENERATE -->
+<div class="sec"><div class="sec-t">Generate</div>
+<div class="ebar">
+  <button class="btn btn-p" onclick="generate()">⚡ Generate .env</button>
+  <button class="btn btn-s" onclick="copyEnv()">📋 Copy</button>
+  <button class="btn btn-s" onclick="dlEnv()">💾 Download</button>
+  <button class="btn btn-s" onclick="preflight()">🔍 Preflight</button>
+</div>
+<ul class="cks" id="checks"></ul>
+<pre id="env-out"></pre>
+</div>
+
+</div><!-- /.w -->
+<div id="toast"></div>
+
+<script>
+'use strict';
+const K='mel_v8';
+const SC=[
+  {id:'WATCHDOG',name:'Wolfdog',icon:'🐺',req:1},
+  {id:'BACKUP',name:'Backup',icon:'💾',req:1,vm:1},
+  {id:'MERMAIL',name:'MerMail',icon:'📧'},
+  {id:'AILAGOON',name:'AiLagoon',icon:'🤖'},
+  {id:'VINTAGE',name:'Vintage',icon:'🖥️'},
+  {id:'SCREENING',name:'TeleScreen',icon:'🔍'},
+];
+let S,expandNode=null;
+function fresh(){
+  S={v:{DEPLOY_TARGET:'',SOURCE_MODE:'local',BLOCKCHAIN_NETWORK:'devnet',
+    MELUSINA_ZONE_SOVEREIGNTY:'subdomain',EMAIL_PROVIDER:'ses',
+    OTP_ENABLED:'false',OTP_ENFORCED:'false',MELUSINA_AUTO_BOOT:'true',
+    MELUSINA_SIDECAR_AUTOSTART:'true',MANAGE_ZONE_DNS:'false',
+    MELUSINA_VM_NAME:'melusina',RESELLER_NFT_MINT:'',RESELLER_NAME:''},
+    dns:[],hosts:[],svc:{},sh:{}};
+  SC.forEach(s=>{S.svc[s.id]=!!s.req;if(!s.vm)S.sh[s.id]='host'});
+}
+function save(){sessionStorage.setItem(K,JSON.stringify(S))}
+function load(){
+  try{const d=sessionStorage.getItem(K);if(d)S=JSON.parse(d);else{fresh();return}}catch(e){fresh();return}
+  SC.forEach(s=>{if(s.req)S.svc[s.id]=true;if(!S.sh)S.sh={};if(!s.vm&&!S.sh[s.id])S.sh[s.id]='host'});
+  if(!S.hosts)S.hosts=[];if(!S.dns)S.dns=[];
+}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+// ═══════════════ VISIBILITY ═══════════════
+function reflow(){
+  document.querySelectorAll('.cond').forEach(el=>{
+    const r=el.dataset.show;if(!r)return;
+    if(r.startsWith('svc:')){el.classList.toggle('show',!!S.svc[r.slice(4)]);return}
+    if(r.startsWith('target:')){const vs=r.slice(7).split('|');el.classList.toggle('show',vs.includes(S.v.DEPLOY_TARGET));return}
+    if(r.startsWith('v:')){const[,k,v]=r.split(':');el.classList.toggle('show',S.v[k]===v);return}
+  });
+  document.querySelectorAll('.sv[data-s]').forEach(c=>{
+    const id=c.dataset.s;c.classList.toggle('on',!!S.svc[id]);
+    const sw=c.querySelector('.sw');if(sw)sw.classList.toggle('on',!!S.svc[id]);
+  });
+  updateStoreStatus();
+}
+
+// ═══════════════ INPUTS ═══════════════
+function bindAll(){
+  document.querySelectorAll('[data-k]').forEach(el=>{
+    if(el._b)return;el._b=1;
+    const k=el.dataset.k;
+    if(el.tagName==='BUTTON')return;
+    if(S.v[k]!==undefined&&S.v[k]!=='')el.value=S.v[k];
+    const h=()=>{S.v[k]=el.value;save();reflow()};
+    el.addEventListener('input',h);el.addEventListener('change',h);
+  });
+}
+function pickR(el){
+  el.parentElement.querySelectorAll('.ch').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');S.v[el.dataset.r]=el.dataset.v;save();reflow();
+}
+function pickTarget(t){
+  document.querySelectorAll('.pk').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  S.v.DEPLOY_TARGET=t;save();reflow();topo();
+}
+function toggleSvc(id){
+  const s=SC.find(x=>x.id===id);if(!s||s.req)return;
+  S.svc[id]=!S.svc[id];if(!S.svc[id])S.sh[id]='host';
+  save();reflow();topo();
+}
+function toggleK(btn){
+  const k=btn.dataset.k;S.v[k]=S.v[k]==='true'?'false':'true';
+  btn.classList.toggle('on',S.v[k]==='true');save();reflow();
+}
+
+// ═══════════════ TOPOLOGY ═══════════════
+// Only container sidecars go in topology — not BACKUP (it's a VM timer)
+function enSc(){return SC.filter(s=>S.svc[s.id]&&!s.vm)}
+function scOn(h){return enSc().filter(s=>S.sh[s.id]===h)}
+
+function topo(){
+  const box=document.getElementById('topo-vis');
+  const gwIp=S.v.MELUSINA_AWS_IP||'';
+  const srSc=scOn('host');
+  let h='<div class="t-row">';
+  h+=`<div class="t-n gw" onclick="xpand('gw')"><div class="t-i">🌐</div><div class="t-l">Public Gateway</div><div class="t-m">${esc(gwIp||'Click to set IP')}</div></div>`;
+  h+=`<div class="t-link"><span class="t-link-tag">WireGuard</span></div>`;
+  h+=`<div class="t-n sv" onclick="xpand('host')"><div class="t-i">🏗️</div><div class="t-l">Melusina Server</div><div class="t-m">${srSc.length} service${srSc.length!==1?'s':''}</div>`;
+  h+=pills('host',srSc);
+  h+=`</div></div>`;
+  if(S.hosts.length){
+    h+='<div class="t-sc-row">';
+    S.hosts.forEach(x=>{
+      const hsc=scOn(x.id);
+      h+=`<div class="t-n sc" style="position:relative" onclick="xpand('${x.id}')">
+        <button class="t-rm" onclick="event.stopPropagation();rmHost('${x.id}')" title="Remove">✕</button>
+        <div class="t-i">${x.conn==='remote'?'🌍':'🔗'}</div>
+        <div class="t-l">Sidecar Host (${x.conn==='remote'?'Remote':'Local'})</div>
+        <div class="t-m">${esc(x.ip||'No IP')} · ${x.conn==='remote'?'WG':'LAN'} · ${hsc.length} svc</div>`;
+      h+=pills(x.id,hsc);
+      h+=`</div>`;
+    });
+    h+='</div>';
+  }
+  box.innerHTML=h;
+  cfgPanel();
+}
+
+function pills(hid,list){
+  const hasMult=S.hosts.length>0;
+  let h=`<div class="t-pills${hasMult?' drop':''}" ondragover="dOver(event,'${hid}')" ondragleave="dLeave(event)" ondrop="dDrop(event,'${hid}')">`;
+  if(list.length)h+=list.map(s=>`<span class="pill" data-s="${s.id}" draggable="${!s.req}" ondragstart="dStart(event,'${s.id}')">${s.icon} ${s.name}</span>`).join('');
+  else if(hasMult) h+=`<span style="color:var(--dm);font-size:.63rem">Drop services here</span>`;
+  h+='</div>';return h;
+}
+
+let dragged=null;
+function dStart(e,id){const s=SC.find(x=>x.id===id);if(s?.req){e.preventDefault();return}
+  dragged=id;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id);
+  requestAnimationFrame(()=>e.target.classList.add('dragging'))}
+function dOver(e,h){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('drag-over')}
+function dLeave(e){e.currentTarget.classList.remove('drag-over')}
+function dDrop(e,h){e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  if(!dragged)return;S.sh[dragged]=h;save();topo();dragged=null}
+
+function xpand(id){expandNode=expandNode===id?null:id;cfgPanel()}
+
+function cfgPanel(){
+  const box=document.getElementById('topo-cfg');
+  if(!expandNode){box.innerHTML='';return}
+  const id=expandNode;
+  let h='<div class="cfg">';
+  if(id==='gw'){
+    h+=`<h4>🌐 Public Gateway</h4>
+      <div class="f"><label>Public IP</label><input data-k="MELUSINA_AWS_IP" value="${esc(S.v.MELUSINA_AWS_IP||'')}" placeholder="16.62.126.40"></div>
+      <div class="h" style="font-size:.68rem;color:var(--dm);margin-top:-6px;margin-bottom:8px">Runs BIND9 DNS, nginx SNI passthrough, WireGuard endpoint, certbot.</div>`;
+    if(S.v.DEPLOY_TARGET!=='local'){
+      h+=`<div class="row"><div class="f"><label>SSH User</label><input data-k="MELUSINA_AWS_USER" value="${esc(S.v.MELUSINA_AWS_USER||'admin')}"></div>
+        <div class="br"><div class="f"><label>SSH Key</label><input data-k="MELUSINA_AWS_KEY" value="${esc(S.v.MELUSINA_AWS_KEY||'')}"></div><button class="brb" onclick="browse('MELUSINA_AWS_KEY','.pem,.key')">Browse</button></div></div>`}
+  }else if(id==='host'){
+    h+=`<h4>🏗️ Melusina Server</h4>
+      <p style="font-size:.72rem;color:var(--dm);margin-bottom:8px">Runs the Incus VM, Sandstorm, Solana auth, and all assigned services. Created on the gateway via <code>incus</code> — no separate SSH needed.</p>`;
+    h+=`<div class="f"><label>VM Name</label><input data-k="MELUSINA_VM_NAME" value="${esc(S.v.MELUSINA_VM_NAME||'melusina')}" placeholder="melusina">
+      <div class="h" style="font-size:.65rem;color:var(--dm)">Incus VM name on the gateway machine</div></div>`;
+  }else{
+    const x=S.hosts.find(a=>a.id===id);if(!x){box.innerHTML='';return}
+    h+=`<h4>${x.conn==='remote'?'🌍':'🔗'} Sidecar Host — ${esc(x.id)}</h4>`;
+    h+=`<div class="row"><div class="f"><label>IP</label><input data-h="${x.id}" data-hk="ip" value="${esc(x.ip||'')}"></div>
+      <div class="f"><label>SSH User</label><input data-h="${x.id}" data-hk="ssh_user" value="${esc(x.ssh_user||'root')}"></div></div>
+    <div class="br"><div class="f"><label>SSH Key</label><input data-h="${x.id}" data-hk="ssh_key" value="${esc(x.ssh_key||'')}"></div>
+      <button class="brb" onclick="browseHK('${x.id}')">Browse</button></div>`;
+    if(x.conn==='remote')h+=`<p style="font-size:.68rem;color:var(--dm);margin-top:8px">WireGuard tunnel to this host is auto-configured during deploy.</p>`;
+  }
+  h+='</div>';box.innerHTML=h;
+  box.querySelectorAll('[data-k]').forEach(inp=>{
+    inp.addEventListener('input',()=>{S.v[inp.dataset.k]=inp.value;save();topo()});
+  });
+  box.querySelectorAll('[data-h]').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      const x=S.hosts.find(a=>a.id===inp.dataset.h);if(x){x[inp.dataset.hk]=inp.value;save();topo()}
+    });
+  });
+}
+
+function addHost(conn){
+  const n=S.hosts.filter(h=>h.conn===conn).length+1;
+  S.hosts.push({id:(conn==='remote'?'remote':'local')+n,conn,ip:'',ssh_user:'root',ssh_key:''});
+  save();topo();
+}
+function rmHost(id){
+  S.hosts=S.hosts.filter(h=>h.id!==id);
+  SC.forEach(s=>{if(S.sh[s.id]===id)S.sh[s.id]='host'});
+  if(expandNode===id)expandNode=null;save();topo();
+}
+
+// ═══════════════ DNS ═══════════════
+function deriveDns(){
+  const d=(S.v.MELUSINA_DOMAIN||'').trim(),el=document.getElementById('dns-derived');
+  if(!d||!d.includes('.')){el.innerHTML='';return}
+  const p=d.split('.'),z=p.length>=3?p.slice(1).join('.'):d,pre=p.length>=3?p[0]:'@';
+  el.innerHTML=`<div style="display:flex;gap:16px;margin-top:4px;font-size:.75rem"><span style="color:var(--dm)">Zone</span><span style="color:var(--gn);font-family:monospace">${z}</span><span style="color:var(--dm)">Sub</span><span style="color:var(--gn);font-family:monospace">${pre}</span><span style="color:var(--dm)">Wildcard</span><span style="color:var(--gn);font-family:monospace">*.${d}</span></div>`;
+}
+function parseDnsLines(){return(S.v.EXTRA_DNS||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(/\s+/);return{name:p[0]||'',type:p[1]||'A',value:p.slice(2).join(' ')}})}
+function deriveKh(){
+  const raw=(S.v.SOLANA_KEYHOLDERS||'').replace(/\n/g,','),ws=raw.split(',').map(w=>w.trim()).filter(Boolean);
+  const t=parseInt(S.v.UNSEAL_THRESHOLD||'3')||3,el=document.getElementById('kh-info');
+  if(!ws.length){el.innerHTML='';return}
+  S.v.TOTAL_KEYHOLDERS=String(ws.length);save();
+  const ok=t<=ws.length;
+  el.innerHTML=`<span style="font-size:.75rem;color:var(--dm)">${ws.length} detected · threshold ${t}/${ws.length} <span style="color:${ok?'var(--gn)':'var(--rd)'}"> ${ok?'✓':'exceeds!'}</span></span>`;
+}
+
+// ═══════════════ WALLET ═══════════════
+let cw=null;
+function detectW(){const m={phantom:window.solana?.isPhantom,solflare:window.solflare?.isSolflare,backpack:window.backpack};document.querySelectorAll('.wb').forEach(b=>b.classList.toggle('det',!!m[b.dataset.w]))}
+async function connectW(n){
+  const p={phantom:window.solana,solflare:window.solflare,backpack:window.backpack}[n];
+  if(!p){toast('Wallet not detected');return}
+  try{const r=await p.connect(),pub=r.publicKey?.toBase58?.()||r.publicKey?.toString()||'';
+    if(!pub)throw new Error('No key');cw={n,pub,p};
+    document.getElementById('w-info').textContent=pub.slice(0,4)+'…'+pub.slice(-4);
+    document.getElementById('w-dc').style.display='';
+    document.querySelectorAll('.wb').forEach(b=>b.classList.toggle('on',b.dataset.w===n));
+    const op=document.querySelector('[data-k="OPERATOR_WALLET"]');
+    if(op&&!op.value){op.value=pub;S.v.OPERATOR_WALLET=pub;save()}
+    toast('Connected');
+  }catch(e){toast('Failed: '+e.message)}
+}
+function disconnectW(){if(cw?.p?.disconnect)cw.p.disconnect();cw=null;
+  document.getElementById('w-info').textContent='';document.getElementById('w-dc').style.display='none';
+  document.querySelectorAll('.wb').forEach(b=>b.classList.remove('on'))}
+
+// ═══════════════ BROWSE ═══════════════
+async function browse(k,acc){
+  if(window.showOpenFilePicker){try{const[fh]=await window.showOpenFilePicker({types:[{accept:{'*/*':acc?acc.split(','):['*']}}]});
+    const f=await fh.getFile(),inp=document.querySelector(`[data-k="${k}"]`);if(inp){inp.value=f.name;S.v[k]=f.name;save()}}catch(e){if(e.name!=='AbortError')toast(e.message)}}
+  else{const i=document.createElement('input');i.type='file';if(acc)i.accept=acc;i.onchange=()=>{const f=i.files[0];if(f){const t=document.querySelector(`[data-k="${k}"]`);if(t){t.value=f.name;S.v[k]=f.name;save()}}};i.click()}}
+async function browseHK(hid){
+  if(window.showOpenFilePicker){try{const[fh]=await window.showOpenFilePicker({types:[{accept:{'*/*':['.pem','.key']}}]});
+    const f=await fh.getFile(),x=S.hosts.find(a=>a.id===hid);if(x){x.ssh_key=f.name;save();topo()}}catch(e){if(e.name!=='AbortError')toast(e.message)}}
+  else toast('Type the path manually')}
+
+// ═══════════════ SOLANA ON-CHAIN ═══════════════
+const PROG_ID='EFjd6AhLRE1curgyK5V6A1nediM2BEyzXo9fwEqNbnop';
+const KNOWN_MASTER='CnnETKyqcTLG1GTKibYjEv7vdXxPnwWAzLZTA81E5FRN';
+const B58C='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function b58d(s){const m=new Map();for(let i=0;i<58;i++)m.set(B58C[i],BigInt(i));let n=0n;for(const c of s)n=n*58n+(m.get(c)??0n);const b=[];while(n>0n){b.unshift(Number(n%256n));n/=256n}for(const c of s){if(c!=='1')break;b.unshift(0)}return new Uint8Array(b)}
+function b58e(b){if(!b.length)return'';let n=0n;for(const x of b)n=n*256n+BigInt(x);const c=[];while(n>0n){c.unshift(B58C[Number(n%58n)]);n/=58n}for(const x of b){if(x)break;c.unshift('1')}return c.join('')}
+const b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const b64e=b=>btoa(String.fromCharCode(...b));
+function solUrl(){return S.v.HELIUS_RPC||(S.v.BLOCKCHAIN_NETWORK==='mainnet-beta'?'https://api.mainnet-beta.solana.com':'https://api.devnet.solana.com')}
+async function solRpc(m,p){const r=await fetch(solUrl(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:m,params:p})});const j=await r.json();if(j.error)throw Error(j.error.message);return j.result}
+const _dc={};async function disc(n){if(_dc[n])return _dc[n];const h=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('account:'+n)));return _dc[n]=h.slice(0,8)}
+function rS(d,o){const l=d[o]|(d[o+1]<<8)|(d[o+2]<<16)|(d[o+3]<<24);return{v:new TextDecoder().decode(d.slice(o+4,o+4+l)),e:o+4+l}}
+function rP(d,o){return b58e(d.slice(o,o+32))}
+function rU(d,o){let v=0;for(let i=7;i>=0;i--)v=v*256+d[o+i];return v}
+
+// ── License check (debounced on domain input) ──
+let _lt=null,_licData=null;
+function debounceLicenseCheck(){clearTimeout(_lt);_lt=setTimeout(checkDomainLicense,800)}
+async function checkDomainLicense(){
+  const dom=(S.v.MELUSINA_DOMAIN||'').trim().toLowerCase(),el=document.getElementById('license-check');
+  if(!dom||!dom.includes('.')){el.innerHTML='';_licData=null;return}
+  el.innerHTML='<div style="color:var(--dm);font-size:.72rem;padding:4px 0">🔍 Checking on-chain…</div>';
+  try{
+    const dc=await disc('LicenseEntry'),db=new TextEncoder().encode(dom);
+    const lb=new Uint8Array([db.length&0xff,(db.length>>8)&0xff,0,0]);
+    const fb=new Uint8Array([...lb,...db]);
+    const res=await solRpc('getProgramAccounts',[PROG_ID,{encoding:'base64',filters:[
+      {memcmp:{offset:0,bytes:b64e(dc),encoding:'base64'}},
+      {memcmp:{offset:112,bytes:b64e(fb),encoding:'base64'}}]}]);
+    if(!res||!res.length){_licData=null;
+      const selR=_rl.find(r=>r.mint===S.v.RESELLER_NFT_MINT);
+      const buyInfo=selR&&selR.price>0
+        ?`<div class="buy-box"><div class="buy-t">💳 Purchase Available</div>
+           <div class="buy-d">Reseller <b>${esc(selR.name)}</b> can issue you a license automatically.</div>
+           <div class="buy-p">${(selR.price/1e9).toFixed(2)} SOL</div>
+           <button class="buy-btn" onclick="purchaseLicense()">Buy License</button>
+           <div style="font-size:.65rem;color:var(--dm);margin-top:6px">Requires: connected wallet, License NFT mint, Squads multisig (see License section below)</div></div>`
+        :(S.v.RESELLER_NFT_MINT?'<div style="font-size:.68rem;color:var(--dm);margin-top:4px">Selected reseller has no price set — fetch resellers to see pricing</div>'
+        :'<div style="font-size:.68rem;color:var(--dm);margin-top:4px">Select a reseller above to see purchase options</div>');
+      el.innerHTML=`<div style="padding:8px 12px;background:rgba(210,153,34,.06);border:1px solid var(--or);border-radius:8px;font-size:.72rem"><span style="color:var(--or)">⚠ No license found on <b>${esc(S.v.BLOCKCHAIN_NETWORK)}</b></span></div>${buyInfo}`;return}
+    const d=b64d(res[0].account.data[0]),lm=rP(d,8),rm=rP(d,40),mm=rP(d,72),ed=rU(d,104);
+    const dR=rS(d,112),iU=rS(d,dR.e),te=iU.e+32,thr=d[te];
+    const st=d[te+1+32+1+32+32],stT=st===0?'Active':st===1?'Revoked':'?',stC=st===0?'var(--gn)':'var(--rd)',mmOk=mm===KNOWN_MASTER;
+    _licData={status:stT,masterOk:mmOk,resellerName:'',licenseMint:lm,resellerMint:rm};
+    if(!S.v.MELUSINA_LICENSE_NFT){S.v.MELUSINA_LICENSE_NFT=lm;const i=document.querySelector('[data-k="MELUSINA_LICENSE_NFT"]');if(i)i.value=lm;save()}
+    el.innerHTML=`<div style="padding:10px 12px;background:${st===0?'rgba(63,185,80,.05)':'rgba(248,81,73,.05)'};border:1px solid ${stC};border-radius:8px;font-size:.72rem">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><b style="color:${stC}">${st===0?'✓ License Found':'⚠ License '+stT}</b><span style="color:${stC};font-weight:600">${stT}</span></div>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:1px 12px;color:var(--dm)">
+        <span>License</span><span class="mono" style="color:var(--tx);font-size:.68rem">${lm}</span>
+        <span>Reseller</span><span class="mono" style="color:var(--tx);font-size:.68rem">${rm.slice(0,8)}…${rm.slice(-4)}</span>
+        <span>Master NFT</span><span style="color:${mmOk?'var(--gn)':'var(--rd)'}"> ${mmOk?'✓ Verified':'✗ Mismatch!'}</span>
+        <span>Edition</span><span>#${ed}</span><span>Threshold</span><span>${thr}</span></div></div>`;
+    fetchResellerByMint(rm);
+  }catch(e){_licData=null;el.innerHTML=`<div style="padding:8px 12px;background:rgba(248,81,73,.06);border:1px solid var(--rd);border-radius:8px;font-size:.72rem;color:var(--rd)">✗ ${esc(e.message)}</div>`}
+}
+
+// ── Reseller fetch & selection ──
+let _rl=[];
+async function fetchResellers(){
+  const el=document.getElementById('reseller-list');
+  el.innerHTML='<div style="color:var(--dm);font-size:.72rem;padding:4px 0">🔍 Fetching on '+esc(S.v.BLOCKCHAIN_NETWORK)+'…</div>';
+  try{
+    const dc=await disc('ResellerEntry');
+    const res=await solRpc('getProgramAccounts',[PROG_ID,{encoding:'base64',filters:[
+      {memcmp:{offset:0,bytes:b64e(dc),encoding:'base64'}}]}]);
+    _rl=[];if(!res||!res.length){el.innerHTML='<div style="font-size:.72rem;color:var(--dm)">No resellers on '+esc(S.v.BLOCKCHAIN_NETWORK)+'</div>';return}
+    for(const a of res){const d=b64d(a.account.data[0]);
+      let o=8;const mint=rP(d,o);o+=32;const mm=rP(d,o);o+=32;o+=8;const owner=rP(d,o);o+=32;
+      const nR=rS(d,o);o=nR.e;const tR=rS(d,o);o=tR.e;
+      const lim=d[o]|(d[o+1]<<8)|(d[o+2]<<16)|(d[o+3]<<24);o+=4;
+      const iss=d[o]|(d[o+1]<<8)|(d[o+2]<<16)|(d[o+3]<<24);o+=4;
+      const hp=d[o];o+=1;if(hp)o+=32;o+=8;
+      const hc=d[o];o+=1;let cat='';if(hc){const c=rS(d,o);cat=c.v;o=c.e}
+      const price=rU(d,o);o+=8;const status=d[o];
+      if(status===0)_rl.push({mint,owner,name:nR.v,terr:tR.v,lim,iss,cat,top:!hp,mOk:mm===KNOWN_MASTER,price})}
+    renderResellers();
+  }catch(e){el.innerHTML=`<div style="font-size:.72rem;color:var(--rd)">✗ ${esc(e.message)}</div>`}}
+
+async function fetchResellerByMint(mint){
+  try{const dc=await disc('ResellerEntry'),mb=b58d(mint),m32=mb.length>=32?mb.slice(mb.length-32):mb;
+    const res=await solRpc('getProgramAccounts',[PROG_ID,{encoding:'base64',filters:[
+      {memcmp:{offset:0,bytes:b64e(dc),encoding:'base64'}},{memcmp:{offset:8,bytes:b64e(m32),encoding:'base64'}}]}]);
+    if(res?.length){const d=b64d(res[0].account.data[0]),nR=rS(d,112);
+      S.v.RESELLER_NFT_MINT=mint;S.v.RESELLER_NAME=nR.v;save();
+      if(_licData&&_licData.resellerMint===mint)_licData.resellerName=nR.v;
+      renderResellers();updateStoreStatus()}}catch(e){}}
+
+function renderResellers(){
+  const el=document.getElementById('reseller-list');if(!el)return;
+  if(!_rl.length&&!S.v.RESELLER_NAME){el.innerHTML='<div style="font-size:.72rem;color:var(--dm)">Click "Fetch Resellers" to load from chain</div>';return}
+  if(!_rl.length&&S.v.RESELLER_NAME){el.innerHTML=`<div class="sv on" style="cursor:default"><div class="sv-i">🏪</div><div class="sv-info"><div class="sv-n">${esc(S.v.RESELLER_NAME)}</div><div class="sv-d">Selected reseller · ${esc(S.v.RESELLER_NFT_MINT?.slice(0,8)||'')}…</div></div></div>`;return}
+  let h='<div style="display:flex;flex-direction:column;gap:6px">';
+  _rl.filter(r=>r.top).forEach(r=>{const s=S.v.RESELLER_NFT_MINT===r.mint,rem=r.lim-r.iss;
+    const ps=r.price>0?`<b style="color:var(--gn)">${(r.price/1e9).toFixed(2)} SOL</b>`:'<span style="color:var(--dm)">No price</span>';
+    h+=`<div class="sv${s?' on':''}" onclick="pickReseller('${r.mint}')" style="cursor:pointer"><div class="sv-i">🏪</div>
+      <div class="sv-info"><div class="sv-n">${esc(r.name)}</div><div class="sv-d">${esc(r.terr)}${r.cat?' · '+esc(r.cat):''} · ${rem} remaining · ${ps}</div></div>
+      <span style="font-size:.6rem;color:${r.mOk?'var(--gn)':'var(--rd)'}">${r.mOk?'✓':'✗'} Master</span></div>`});
+  const sub=_rl.filter(r=>!r.top);
+  if(sub.length){h+=`<details style="margin-top:2px"><summary style="font-size:.68rem;color:var(--dm)">${sub.length} sub-reseller${sub.length>1?'s':''}</summary>`;
+    sub.forEach(r=>{const s=S.v.RESELLER_NFT_MINT===r.mint;
+      h+=`<div class="sv${s?' on':''}" onclick="pickReseller('${r.mint}')" style="cursor:pointer;margin-top:4px"><div class="sv-i">🏪</div>
+        <div class="sv-info"><div class="sv-n">${esc(r.name)}</div><div class="sv-d">${esc(r.terr)}</div></div></div>`});
+    h+='</details>'}
+  h+='</div>';el.innerHTML=h}
+
+function pickReseller(mint){const r=_rl.find(x=>x.mint===mint);
+  S.v.RESELLER_NFT_MINT=mint;S.v.RESELLER_NAME=r?.name||'';save();renderResellers();updateStoreStatus();reflow();
+  if(S.v.MELUSINA_DOMAIN&&!_licData)debounceLicenseCheck()}
+
+function updateStoreStatus(){const el=document.getElementById('store-status');if(!el)return;
+  if(!S.v.RESELLER_NFT_MINT)el.innerHTML='<span style="color:var(--or)">⚠ Select a reseller above first — the store provides the latest verified tarball via your reseller</span>';
+  else el.innerHTML=`<span style="color:var(--gn)">✓ Latest bundle via <b>${esc(S.v.RESELLER_NAME)}</b> — deploy script downloads automatically</span>`}
+
+// ═══════════════ PURCHASE LICENSE ═══════════════
+const METADATA_PROG_ID='metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
+const TOKEN_PROG_ID='TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+
+async function purchaseLicense(){
+  if(!cw){toast('Connect wallet first');return}
+  const dom=(S.v.MELUSINA_DOMAIN||'').trim().toLowerCase();
+  if(!dom||!dom.includes('.')){toast('Enter a domain first');return}
+  const resMint=S.v.RESELLER_NFT_MINT;
+  if(!resMint){toast('Select a reseller first');return}
+  const licMint=S.v.MELUSINA_LICENSE_NFT;
+  if(!licMint){toast('Enter a License NFT mint in the License section');return}
+  const sqM=S.v.SQUADS_MULTISIG,sqV=S.v.SQUADS_VAULT;
+  if(!sqM||!sqV){toast('Enter Squads multisig & vault in the License section');return}
+
+  const selR=_rl.find(r=>r.mint===resMint);
+  if(!selR||!selR.price||selR.price===0){toast('Reseller has no price set');return}
+
+  const el=document.getElementById('license-check');
+  el.innerHTML+='<div style="color:var(--dm);font-size:.72rem;padding:4px 0;margin-top:4px">⏳ Building purchase transaction…</div>';
+
+  try{
+    const W3=window.solanaWeb3;if(!W3)throw Error('Solana web3.js not loaded');
+    const prog=new W3.PublicKey(PROG_ID);
+    const masterMint=new W3.PublicKey(KNOWN_MASTER);
+    const resMintPk=new W3.PublicKey(resMint);
+    const licMintPk=new W3.PublicKey(licMint);
+    const buyerPk=new W3.PublicKey(cw.pub);
+    const resOwnerPk=new W3.PublicKey(selR.owner);
+    const sqMPk=new W3.PublicKey(sqM);
+    const sqVPk=new W3.PublicKey(sqV);
+    const metaProg=new W3.PublicKey(METADATA_PROG_ID);
+    const tokProg=new W3.PublicKey(TOKEN_PROG_ID);
+
+    // Derive PDAs
+    const [registryPda]=W3.PublicKey.findProgramAddressSync([Buffer.from('registry'),masterMint.toBuffer()],prog);
+    const [resellerPda]=W3.PublicKey.findProgramAddressSync([Buffer.from('reseller'),resMintPk.toBuffer()],prog);
+    const [licensePda]=W3.PublicKey.findProgramAddressSync([Buffer.from('license'),licMintPk.toBuffer()],prog);
+    const normDom=dom.replace(/\.$/,'').toLowerCase();
+    const domHash=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(normDom)));
+    const [domClaimPda]=W3.PublicKey.findProgramAddressSync([Buffer.from('domain_claim'),domHash],prog);
+    const [treasuryPda]=W3.PublicKey.findProgramAddressSync([Buffer.from('treasury'),masterMint.toBuffer()],prog);
+    const [masterEdPda]=W3.PublicKey.findProgramAddressSync(
+      [Buffer.from('metadata'),metaProg.toBuffer(),masterMint.toBuffer(),Buffer.from('edition')],metaProg);
+    const [licEdPda]=W3.PublicKey.findProgramAddressSync(
+      [Buffer.from('metadata'),metaProg.toBuffer(),licMintPk.toBuffer(),Buffer.from('edition')],metaProg);
+
+    // Anchor discriminator: SHA256("global:purchase_license")[0..8]
+    const discH=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('global:purchase_license')));
+    const discrim=discH.slice(0,8);
+
+    // Serialize instruction data (Borsh)
+    const domB=new TextEncoder().encode(normDom);
+    const threshold=parseInt(S.v.UNSEAL_THRESHOLD||'3')||3;
+    const instUrl=`https://admin.${dom}`;
+    const instB=new TextEncoder().encode(instUrl);
+    const nMem=Math.max(parseInt(S.v.TOTAL_KEYHOLDERS||'1')||1,1);
+    const mThr=Math.max(threshold,1);
+    const tlsFP=new Uint8Array(32);
+
+    const dLen=8+4+domB.length+1+32+4+instB.length+32+2+2;
+    const data=new Uint8Array(dLen);let p=0;
+    data.set(discrim,p);p+=8;
+    data[p]=domB.length&0xff;data[p+1]=(domB.length>>8)&0xff;data[p+2]=(domB.length>>16)&0xff;data[p+3]=(domB.length>>24)&0xff;p+=4;
+    data.set(domB,p);p+=domB.length;
+    data[p]=threshold;p+=1;
+    data.set(tlsFP,p);p+=32;
+    data[p]=instB.length&0xff;data[p+1]=(instB.length>>8)&0xff;data[p+2]=(instB.length>>16)&0xff;data[p+3]=(instB.length>>24)&0xff;p+=4;
+    data.set(instB,p);p+=instB.length;
+    data.set(domHash,p);p+=32;
+    data[p]=nMem&0xff;data[p+1]=(nMem>>8)&0xff;p+=2;
+    data[p]=mThr&0xff;data[p+1]=(mThr>>8)&0xff;p+=2;
+
+    const keys=[
+      {pubkey:registryPda,isSigner:false,isWritable:true},
+      {pubkey:resellerPda,isSigner:false,isWritable:true},
+      {pubkey:licensePda,isSigner:false,isWritable:true},
+      {pubkey:domClaimPda,isSigner:false,isWritable:true},
+      {pubkey:buyerPk,isSigner:true,isWritable:true},
+      {pubkey:resOwnerPk,isSigner:false,isWritable:true},
+      {pubkey:treasuryPda,isSigner:false,isWritable:true},
+      {pubkey:masterMint,isSigner:false,isWritable:false},
+      {pubkey:masterEdPda,isSigner:false,isWritable:false},
+      {pubkey:licMintPk,isSigner:false,isWritable:false},
+      {pubkey:licEdPda,isSigner:false,isWritable:false},
+      {pubkey:sqVPk,isSigner:false,isWritable:false},
+      {pubkey:sqMPk,isSigner:false,isWritable:false},
+      {pubkey:W3.SystemProgram.programId,isSigner:false,isWritable:false},
+      {pubkey:tokProg,isSigner:false,isWritable:false},
+    ];
+
+    const ix=new W3.TransactionInstruction({programId:prog,keys,data:Buffer.from(data)});
+    const conn=new W3.Connection(solUrl());
+    const {blockhash}=await conn.getLatestBlockhash();
+    const tx=new W3.Transaction({recentBlockhash:blockhash,feePayer:buyerPk});
+    tx.add(ix);
+
+    const signed=await cw.p.signTransaction(tx);
+    const sig=await conn.sendRawTransaction(signed.serialize());
+    await conn.confirmTransaction(sig,'confirmed');
+
+    toast('License purchased! TX: '+sig.slice(0,12)+'…');
+    S.v.MELUSINA_LICENSE_NFT=licMint;save();
+    setTimeout(()=>checkDomainLicense(),2000);
+  }catch(e){
+    toast('Purchase failed: '+e.message);
+    console.error('Purchase error:',e);
+  }
+}
+
+// ═══════════════ PREFLIGHT ═══════════════
+function preflight(){
+  const v=S.v,c=[],wR=/^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+  const kh=(v.SOLANA_KEYHOLDERS||'').replace(/\n/g,',').split(',').map(w=>w.trim()).filter(Boolean);
+  const th=parseInt(v.UNSEAL_THRESHOLD||'3')||3;
+  c.push({l:'Domain',p:!!v.MELUSINA_DOMAIN});
+  if(v.MELUSINA_DOMAIN)c.push({l:'Domain format',p:/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(v.MELUSINA_DOMAIN)});
+  c.push({l:'Reseller selected',p:!!v.RESELLER_NFT_MINT});
+  c.push({l:'Deploy mode chosen',p:!!v.DEPLOY_TARGET});
+  c.push({l:'Gateway IP',p:!!v.MELUSINA_AWS_IP});
+  if(v.DEPLOY_TARGET==='remote_from')c.push({l:'SSH key',p:!!v.MELUSINA_AWS_KEY});
+  c.push({l:'VM Name',p:!!v.MELUSINA_VM_NAME});
+  c.push({l:'Operator wallet',p:!!v.OPERATOR_WALLET});
+  if(v.OPERATOR_WALLET)c.push({l:'Operator format',p:wR.test(v.OPERATOR_WALLET)});
+  c.push({l:'License NFT',p:!!v.MELUSINA_LICENSE_NFT});
+  if(v.MELUSINA_LICENSE_NFT)c.push({l:'License NFT format',p:wR.test(v.MELUSINA_LICENSE_NFT)});
+  c.push({l:'Keyholders',p:kh.length>0});
+  if(kh.length){c.push({l:`Threshold ${th}≤${kh.length}`,p:th<=kh.length});kh.forEach((a,i)=>c.push({l:`KH ${i+1} format`,p:wR.test(a)}))}
+  if(v.OTP_ENABLED==='true')c.push({l:'TG Gateway token',p:!!v.TELEGRAM_GATEWAY_TOKEN});
+  if(S.svc.MERMAIL){const pr=v.EMAIL_PROVIDER;if(pr==='ses')c.push({l:'SES region',p:!!v.AWS_SES_REGION});else if(pr==='postmark')c.push({l:'Postmark key',p:!!v.POSTMARK_API_KEY});else if(pr==='smtp')c.push({l:'SMTP host',p:!!v.SMTP_FALLBACK_HOST})}
+  c.push({l:'Watchdog bot token',p:!!v.WATCHDOG_TG_TOKEN});
+  c.push({l:'Watchdog chat ID',p:!!v.WATCHDOG_TG_CHAT_ID});
+  S.hosts.forEach(x=>{c.push({l:`Host ${x.id} IP`,p:!!x.ip})});
+  if(_licData){c.push({l:'License on-chain: '+(_licData.status||'?'),p:_licData.status==='Active'});
+    c.push({l:'Master NFT lineage',p:_licData.masterOk});
+    if(_licData.resellerName)c.push({l:'Reseller: '+_licData.resellerName,p:true})}
+  const ul=document.getElementById('checks');ul.innerHTML='';
+  const ok=c.filter(x=>x.p).length;
+  const hd=document.createElement('li');hd.style.fontWeight='600';hd.innerHTML=`<div class="ck ${ok===c.length?'p':'f'}">${ok===c.length?'✓':'!'}</div><span>${ok}/${c.length}</span>`;ul.appendChild(hd);
+  c.forEach(x=>{const li=document.createElement('li');li.innerHTML=`<div class="ck ${x.p?'p':'f'}">${x.p?'✓':'✗'}</div><span>${x.l}</span>`;ul.appendChild(li)});
+}
+
+// ═══════════════ GENERATE ═══════════════
+function generate(){
+  preflight();const v=S.v,L=[];
+  const sec=(h,a)=>{L.push('');L.push('# '+h);a.filter(Boolean).forEach(x=>L.push(x))};
+  const dom=v.MELUSINA_DOMAIN||'';
+  const zoneDom=dom.split('.').length>=3?dom.split('.').slice(1).join('.'):dom;
+  L.push('# Melusina deployment.env — '+new Date().toISOString());
+
+  sec('Domain & Infrastructure',[
+    `MELUSINA_DOMAIN="${dom}"`,
+    `MELUSINA_ZONE_SOVEREIGNTY="${v.MELUSINA_ZONE_SOVEREIGNTY||'subdomain'}"`,
+    v.MANAGE_ZONE_DNS==='true'?'MANAGE_ZONE_DNS="true"':null,
+    `MELUSINA_AWS_IP="${v.MELUSINA_AWS_IP||''}"`,
+    v.MELUSINA_AWS_USER?`MELUSINA_AWS_USER="${v.MELUSINA_AWS_USER}"`:null,
+    v.MELUSINA_AWS_KEY?`MELUSINA_AWS_KEY="${v.MELUSINA_AWS_KEY}"`:null,
+    `MELUSINA_VM_NAME="${v.MELUSINA_VM_NAME||'melusina'}"`
+  ]);
+
+  const dnsL=parseDnsLines();if(dnsL.length){sec('Extra DNS',[]); dnsL.forEach((e,i)=>{L.push(`EXTRA_DNS_${i+1}_NAME="${e.name}"`,`EXTRA_DNS_${i+1}_TYPE="${e.type}"`,`EXTRA_DNS_${i+1}_VALUE="${e.value}"`)})}
+
+  sec('WireGuard',[
+    `MELUSINA_WG_PORT="${v.MELUSINA_WG_PORT||'51820'}"`,
+    `MELUSINA_WG_AWS_IP="${v.MELUSINA_WG_AWS_IP||'10.200.0.1'}"`,
+    `MELUSINA_WG_VM_IP="${v.MELUSINA_WG_VM_IP||'10.200.0.2'}"`
+  ]);
+
+  sec('Sandstorm',[`SOURCE_MODE="${v.SOURCE_MODE||'local'}"`,
+    v.MELUSINA_SANDSTORM_BUNDLE?`MELUSINA_SANDSTORM_BUNDLE="${v.MELUSINA_SANDSTORM_BUNDLE}"`:null]);
+
+  sec('Blockchain & License',[
+    `BLOCKCHAIN_NETWORK="${v.BLOCKCHAIN_NETWORK||'devnet'}"`,
+    `MELUSINA_LICENSE_NFT="${v.MELUSINA_LICENSE_NFT||''}"`,
+    `MELUSINA_PROGRAM_ID="${v.MELUSINA_PROGRAM_ID||''}"`,
+    v.RESELLER_NFT_MINT?`RESELLER_NFT_MINT="${v.RESELLER_NFT_MINT}"`:null,
+    v.MASTER_NFT_MINT?`MASTER_NFT_MINT="${v.MASTER_NFT_MINT}"`:null,
+    v.MELUSINA_GOVERNANCE_ID?`MELUSINA_GOVERNANCE_ID="${v.MELUSINA_GOVERNANCE_ID}"`:null,
+    v.SQUADS_MULTISIG?`SQUADS_MULTISIG="${v.SQUADS_MULTISIG}"`:null,
+    v.SQUADS_VAULT?`SQUADS_VAULT="${v.SQUADS_VAULT}"`:null,
+    v.ADMIN_WALLET?`ADMIN_WALLET="${v.ADMIN_WALLET}"`:null,
+    v.HELIUS_API_KEY?`HELIUS_API_KEY="${v.HELIUS_API_KEY}"`:null,
+    v.HELIUS_RPC?`HELIUS_RPC="${v.HELIUS_RPC}"`:null
+  ]);
+
+  sec('Identity & Keyholders',[
+    `OPERATOR_WALLET="${v.OPERATOR_WALLET||''}"`,
+    `SOLANA_KEYHOLDERS="${(v.SOLANA_KEYHOLDERS||'').replace(/\n/g,',')}"`,
+    `UNSEAL_THRESHOLD="${v.UNSEAL_THRESHOLD||'3'}"`,
+    `TOTAL_KEYHOLDERS="${v.TOTAL_KEYHOLDERS||'0'}"`
+  ]);
+
+  if(v.OTP_ENABLED==='true')sec('OTP',[`TELEGRAM_GATEWAY_TOKEN="${v.TELEGRAM_GATEWAY_TOKEN||''}"`,v.OTP_ENFORCED==='true'?'OTP_ENFORCE_SIGNUP="true"':null]);
+
+  const en=SC.filter(s=>S.svc[s.id]&&!s.vm),ah=['host',...S.hosts.map(h=>h.id)];
+  sec('Sidecar Configuration',[
+    `SIDECAR_HOSTS="${ah.join(',')}"`,
+    'BACKUP_ENABLED="true"',
+    ...en.map(s=>`SIDECAR_HOST_${s.id}="${S.sh[s.id]||'host'}"`)
+  ]);
+
+  S.hosts.forEach(x=>{const p='SIDECAR_'+x.id.toUpperCase()+'_';
+    sec('Host '+x.id,[`${p}IP="${x.ip||''}"`,`${p}SSH_USER="${x.ssh_user||'root'}"`,`${p}SSH_KEY="${x.ssh_key||''}"`])});
+
+  if(S.svc.MERMAIL){
+    const pr=v.EMAIL_PROVIDER||'ses';
+    const fromAddr='noreply@'+zoneDom;
+    sec('MerMail — Email Delivery',[`EMAIL_PROVIDER="${pr}"`]);
+    if(pr==='ses')L.push(`AWS_SES_REGION="${v.AWS_SES_REGION||''}"`,`AWS_SES_SMTP_USER="${v.AWS_SES_SMTP_USER||''}"`,`AWS_SES_SMTP_PASS="${v.AWS_SES_SMTP_PASS||''}"`,`AWS_SES_FROM="${fromAddr}"`);
+    else if(pr==='postmark')L.push(`POSTMARK_API_KEY="${v.POSTMARK_API_KEY||''}"`,`POSTMARK_FROM="${fromAddr}"`);
+    else if(pr==='smtp')L.push(`SMTP_FALLBACK_HOST="${v.SMTP_FALLBACK_HOST||''}"`,`SMTP_FALLBACK_PORT="${v.SMTP_FALLBACK_PORT||'587'}"`,`SMTP_FALLBACK_USER="${v.SMTP_FALLBACK_USER||''}"`,`SMTP_FALLBACK_PASS="${v.SMTP_FALLBACK_PASS||''}"`);
+    L.push(`DKIM_SELECTOR="${v.DKIM_SELECTOR||'melusina'}"`);
+    if(v.MERMAIL_ADMIN_TOKEN)L.push(`MERMAIL_ADMIN_TOKEN="${v.MERMAIL_ADMIN_TOKEN}"`);
+  }
+
+  sec('Monitoring — Wolfdog',[
+    `WATCHDOG_TG_TOKEN="${v.WATCHDOG_TG_TOKEN||''}"`,
+    `WATCHDOG_TG_CHAT_ID="${v.WATCHDOG_TG_CHAT_ID||''}"`,
+    v.WATCHDOG_TG_ADMINS?`WATCHDOG_TG_ADMINS="${v.WATCHDOG_TG_ADMINS}"`:null,
+    v.WATCHDOG_AUTH_PAGE_URL?`WATCHDOG_AUTH_PAGE_URL="${v.WATCHDOG_AUTH_PAGE_URL}"`:null,
+    v.ALERT_BACKOFF_SCHEDULE?`ALERT_BACKOFF_SCHEDULE="${v.ALERT_BACKOFF_SCHEDULE}"`:null
+  ]);
+
+  const adv=['MELUSINA_AUTO_BOOT','MELUSINA_SIDECAR_AUTOSTART','MELUSINA_DEPLOY_TIMEOUT','MELUSINA_HEALTH_INTERVAL','MELUSINA_MTU','MELUSINA_DNS_TTL','MELUSINA_LOG_DIR','MELUSINA_BACKUP_DIR','MELUSINA_CERT_EMAIL'];
+  const al=adv.filter(k=>v[k]!==undefined&&v[k]!=='').map(k=>`${k}="${v[k]}"`);
+  if(al.length)sec('Advanced',al);
+
+  const out=L.join('\n')+'\n';
+  document.getElementById('env-out').textContent=out;document.getElementById('env-out').style.display='block';
+}
+function copyEnv(){const t=document.getElementById('env-out').textContent;if(!t){toast('Generate first');return}
+  navigator.clipboard.writeText(t).then(()=>toast('Copied')).catch(()=>toast('Failed'))}
+function dlEnv(){const t=document.getElementById('env-out').textContent;if(!t){toast('Generate first');return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download='deployment.env';a.click();toast('Downloaded')}
+
+// ═══════════════ IMPORT ═══════════════
+function importFile(inp){const f=inp?.files?.[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{parseImp(r.result);toast('Imported '+f.name)};r.readAsText(f)}
+function parseImp(text){
+  const kv={};text.split('\n').forEach(l=>{const m=l.match(/^([A-Z_][A-Z0-9_]*)="?([^"]*)"?$/);if(m)kv[m[1]]=m[2]});
+  Object.keys(kv).forEach(k=>{S.v[k]=kv[k]});
+  SC.forEach(s=>{const hk='SIDECAR_HOST_'+s.id;if(kv[hk]){S.sh[s.id]=kv[hk];S.svc[s.id]=true}});
+  if(kv.MELUSINA_SIDECARS){const en=kv.MELUSINA_SIDECARS.split(',').map(x=>x.trim());SC.forEach(s=>{if(!s.req&&!en.includes(s.id))S.svc[s.id]=false})}
+  if(kv.SIDECAR_HOSTS){S.hosts=kv.SIDECAR_HOSTS.split(',').map(x=>x.trim()).filter(x=>x!=='host').map(id=>{
+    const p='SIDECAR_'+id.toUpperCase()+'_';return{id,conn:id.startsWith('remote')?'remote':'local',ip:kv[p+'IP']||'',ssh_user:kv[p+'SSH_USER']||'root',ssh_key:kv[p+'SSH_KEY']||''}})}
+  if(kv.TELEGRAM_GATEWAY_TOKEN)S.v.OTP_ENABLED='true';
+  save();boot();
+}
+function resetAll(){if(!confirm('Reset everything?'))return;sessionStorage.clear();fresh();boot();toast('Reset')}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
+
+document.body.addEventListener('dragover',e=>e.preventDefault());
+document.body.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer?.files?.[0];
+  if(f&&(f.name.endsWith('.env')||f.name.endsWith('.txt'))){const r=new FileReader();r.onload=()=>{parseImp(r.result);toast('Imported '+f.name)};r.readAsText(f)}});
+
+// ═══════════════ BOOT ═══════════════
+function boot(){
+  bindAll();topo();deriveKh();deriveDns();reflow();
+  if(S.v.DEPLOY_TARGET)pickTarget(S.v.DEPLOY_TARGET);
+  document.querySelectorAll('.ch[data-r]').forEach(el=>el.classList.toggle('on',S.v[el.dataset.r]===el.dataset.v));
+  document.querySelectorAll('.tgl[data-k]').forEach(b=>b.classList.toggle('on',S.v[b.dataset.k]==='true'));
+  detectW();renderResellers();
+  if(S.v.MELUSINA_DOMAIN)debounceLicenseCheck();
+}
+load();boot();
+</script>
+</body>
+</html>
