@@ -623,7 +623,8 @@ async function fetchResellers(){
       const iss=d[o]|(d[o+1]<<8)|(d[o+2]<<16)|(d[o+3]<<24);o+=4;
       const hp=d[o];o+=1;if(hp)o+=32;o+=8;
       const hc=d[o];o+=1;let cat='';if(hc){const c=rS(d,o);cat=c.v;o=c.e}
-      const price=rU(d,o);o+=8;const status=d[o];
+      const status=d[o];o+=1;o+=8;const hasRev=d[o];o+=1;if(hasRev)o+=8;o+=1;
+      const price=rU(d,o);
       if(status===0)_rl.push({mint,owner,name:nR.v,terr:tR.v,lim,iss,cat,top:!hp,mOk:mm===KNOWN_MASTER,price})}
     renderResellers();
   }catch(e){el.innerHTML=`<div style="font-size:.72rem;color:var(--rd)">✗ ${esc(e.message)}</div>`}}
