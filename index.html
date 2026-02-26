@@ -601,25 +601,16 @@ async function checkDomainLicense(){
       const selR=_rl.find(r=>r.mint===S.v.RESELLER_NFT_MINT);
       const buyInfo=selR&&selR.price>0
         ?`<div class="buy-box"><div class="buy-t">💳 Purchase Available</div>
-           <div class="buy-d">Reseller <b>${esc(selR.name)}</b> can issue you a license automatically.</div>
+           <div class="buy-d">Reseller <b>${esc(selR.name)}</b> — one-click license for <b>${esc(dom)}</b></div>
            <div class="buy-p">${(selR.price/1e9).toFixed(2)} SOL</div>
-           <div style="margin:8px 0">
-             <label style="font-size:.68rem;color:var(--dm);display:block;margin-bottom:2px">License NFT Mint <span style="color:var(--or)">(Print Edition you hold)</span></label>
-             <input id="buy-lic-mint" class="mono" style="width:100%;padding:6px 8px;font-size:.72rem;background:var(--bg);border:1px solid var(--bd);border-radius:6px;color:var(--fg)" placeholder="Paste license NFT mint address" value="${esc(S.v.MELUSINA_LICENSE_NFT||'')}" oninput="S.v.MELUSINA_LICENSE_NFT=this.value;const f=document.querySelector('[data-k=MELUSINA_LICENSE_NFT]');if(f)f.value=this.value;save()">
-           </div>
-           <div style="margin:8px 0">
-             <label style="font-size:.68rem;color:var(--dm);display:block;margin-bottom:2px">Squads Multisig</label>
-             <input id="buy-sq-multi" class="mono" style="width:100%;padding:6px 8px;font-size:.72rem;background:var(--bg);border:1px solid var(--bd);border-radius:6px;color:var(--fg)" placeholder="Squads multisig address" value="${esc(S.v.SQUADS_MULTISIG||'')}" oninput="S.v.SQUADS_MULTISIG=this.value;const f=document.querySelector('[data-k=SQUADS_MULTISIG]');if(f)f.value=this.value;save()">
-           </div>
-           <div style="margin:8px 0">
-             <label style="font-size:.68rem;color:var(--dm);display:block;margin-bottom:2px">Squads Vault</label>
-             <input id="buy-sq-vault" class="mono" style="width:100%;padding:6px 8px;font-size:.72rem;background:var(--bg);border:1px solid var(--bd);border-radius:6px;color:var(--fg)" placeholder="Squads vault address" value="${esc(S.v.SQUADS_VAULT||'')}" oninput="S.v.SQUADS_VAULT=this.value;const f=document.querySelector('[data-k=SQUADS_VAULT]');if(f)f.value=this.value;save()">
-           </div>
-           <button class="buy-btn" onclick="purchaseLicense()">🛒 Buy License</button>
-           <div style="font-size:.62rem;color:var(--dm);margin-top:6px">⚠ Wallet must be connected (click Phantom/Solflare above). All three fields are required.</div></div>`
+           <div id="edition-status" style="font-size:.68rem;color:var(--dm);margin-bottom:6px">Checking available editions…</div>
+           <button class="buy-btn" onclick="purchaseLicense()">🛒 Buy License — ${(selR.price/1e9).toFixed(2)} SOL</button>
+           <div style="font-size:.62rem;color:var(--dm);margin-top:6px">⚠ Wallet must be connected. Your wallet becomes the license owner.</div></div>`
         :(S.v.RESELLER_NFT_MINT?'<div style="font-size:.68rem;color:var(--dm);margin-top:4px">Selected reseller has no price set — fetch resellers to see pricing</div>'
         :'<div style="font-size:.68rem;color:var(--dm);margin-top:4px">Select a reseller above to see purchase options</div>');
-      el.innerHTML=`<div style="padding:8px 12px;background:rgba(210,153,34,.06);border:1px solid var(--or);border-radius:8px;font-size:.72rem"><span style="color:var(--or)">⚠ No license found on <b>${esc(S.v.BLOCKCHAIN_NETWORK)}</b></span></div>${buyInfo}`;return}
+      el.innerHTML=`<div style="padding:8px 12px;background:rgba(210,153,34,.06);border:1px solid var(--or);border-radius:8px;font-size:.72rem"><span style="color:var(--or)">⚠ No license found on <b>${esc(S.v.BLOCKCHAIN_NETWORK)}</b></span></div>${buyInfo}`;
+      if(selR&&selR.price>0)updateEditionStatus();
+      return}
     const d=b64d(res[0].account.data[0]),lm=rP(d,8),rm=rP(d,40),mm=rP(d,72),ed=rU(d,104);
     const dR=rS(d,112),iU=rS(d,dR.e),te=iU.e+32,thr=d[te];
     const st=d[te+1+32+1+32+32],stT=st===0?'Active':st===1?'Revoked':'?',stC=st===0?'var(--gn)':'var(--rd)',mmOk=mm===KNOWN_MASTER;
@@ -694,9 +685,43 @@ function updateStoreStatus(){const el=document.getElementById('store-status');if
   if(!S.v.RESELLER_NFT_MINT)el.innerHTML='<span style="color:var(--or)">⚠ Select a reseller above first — the store provides the latest verified tarball via your reseller</span>';
   else el.innerHTML=`<span style="color:var(--gn)">✓ Latest bundle via <b>${esc(S.v.RESELLER_NAME)}</b> — deploy script downloads automatically</span>`}
 
-// ═══════════════ PURCHASE LICENSE ═══════════════
+// ═══════════════ PURCHASE LICENSE (Simple — no Squads) ═══════════════
 const METADATA_PROG_ID='metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
 const TOKEN_PROG_ID='TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+
+// Pre-minted Print Editions available for purchase (edition #1 is the reseller)
+const KNOWN_EDITIONS=[
+  'HHpWETt3gUULTwKMDK4yZXXGcLr2h3HWDguFkUwixmpY',
+  'HE7zWiV2zkYmLmuCRByYphg4uMiumBWdyrrwPCjds3RU',
+  'JCqkWp13gHvY9sKz3jJzGsuxpo8uZPhiuqdNysW32sgY',
+  '7BbtTTbzYKzKs3yTeF6qz5dRQcnU1p3CGDkYtsc5kkoL',
+];
+let _selectedEdition=null;
+
+// Check which editions are still available (no license PDA exists yet)
+async function findAvailableEdition(){
+  const W3=window.solanaWeb3;if(!W3)return null;
+  const prog=new W3.PublicKey(PROG_ID);
+  const conn=new W3.Connection(solUrl());
+  for(const mint of KNOWN_EDITIONS){
+    const mintPk=new W3.PublicKey(mint);
+    const [licensePda]=W3.PublicKey.findProgramAddressSync([Buffer.from('license'),mintPk.toBuffer()],prog);
+    const info=await conn.getAccountInfo(licensePda);
+    if(!info){_selectedEdition=mint;return mint}
+  }
+  return null;
+}
+
+// Called after buy-box renders to show edition status
+async function updateEditionStatus(){
+  const el=document.getElementById('edition-status');if(!el)return;
+  el.innerHTML='<span style="color:var(--dm)">⏳ Checking available editions…</span>';
+  try{
+    const ed=await findAvailableEdition();
+    if(ed)el.innerHTML=`<span style="color:var(--gn)">✓ Edition ready: ${ed.slice(0,6)}…${ed.slice(-4)}</span>`;
+    else el.innerHTML='<span style="color:var(--rd)">✗ No editions available — contact reseller</span>';
+  }catch(e){el.innerHTML=`<span style="color:var(--or)">⚠ Could not check editions: ${esc(e.message)}</span>`}
+}
 
 async function purchaseLicense(){
   if(!cw){toast('Connecting wallet…');if(!await autoConnect()){toast('No wallet found — click Phantom/Solflare button in LICENSE & IDENTITY section to connect');return}}
@@ -704,33 +729,30 @@ async function purchaseLicense(){
   if(!dom||!dom.includes('.')){toast('Enter a domain first');return}
   const resMint=S.v.RESELLER_NFT_MINT;
   if(!resMint){toast('Select a reseller first');return}
-  // Read from inline buy-box fields (which sync to S.v)
-  const licEl=document.getElementById('buy-lic-mint');if(licEl&&licEl.value)S.v.MELUSINA_LICENSE_NFT=licEl.value;
-  const sqmEl=document.getElementById('buy-sq-multi');if(sqmEl&&sqmEl.value)S.v.SQUADS_MULTISIG=sqmEl.value;
-  const sqvEl=document.getElementById('buy-sq-vault');if(sqvEl&&sqvEl.value)S.v.SQUADS_VAULT=sqvEl.value;
-  const licMint=S.v.MELUSINA_LICENSE_NFT;
-  if(!licMint){toast('Enter your License NFT mint address in the purchase form above');return}
-  const sqM=S.v.SQUADS_MULTISIG,sqV=S.v.SQUADS_VAULT;
-  if(!sqM||!sqV){toast('Enter Squads multisig & vault addresses in the purchase form above');return}
 
   const selR=_rl.find(r=>r.mint===resMint);
   if(!selR||!selR.price||selR.price===0){toast('Reseller has no price set');return}
 
   const el=document.getElementById('license-check');
-  el.innerHTML+='<div style="color:var(--dm);font-size:.72rem;padding:4px 0;margin-top:4px">⏳ Building purchase transaction…</div>';
+  el.innerHTML+='<div style="color:var(--dm);font-size:.72rem;padding:4px 0;margin-top:4px">⏳ Finding available edition…</div>';
 
   try{
     const W3=window.solanaWeb3;if(!W3)throw Error('Solana web3.js not loaded');
+
+    // Auto-find an available edition
+    const licMint=_selectedEdition||await findAvailableEdition();
+    if(!licMint)throw Error('No available license editions — all are claimed. Contact the reseller.');
+
     const prog=new W3.PublicKey(PROG_ID);
     const masterMint=new W3.PublicKey(KNOWN_MASTER);
     const resMintPk=new W3.PublicKey(resMint);
     const licMintPk=new W3.PublicKey(licMint);
     const buyerPk=new W3.PublicKey(cw.pub);
     const resOwnerPk=new W3.PublicKey(selR.owner);
-    const sqMPk=new W3.PublicKey(sqM);
-    const sqVPk=new W3.PublicKey(sqV);
     const metaProg=new W3.PublicKey(METADATA_PROG_ID);
     const tokProg=new W3.PublicKey(TOKEN_PROG_ID);
+
+    el.innerHTML+='<div style="color:var(--dm);font-size:.72rem;padding:2px 0">⏳ Building transaction (edition '+licMint.slice(0,8)+'…)…</div>';
 
     // Derive PDAs
     const [registryPda]=W3.PublicKey.findProgramAddressSync([Buffer.from('registry'),masterMint.toBuffer()],prog);
@@ -745,20 +767,18 @@ async function purchaseLicense(){
     const [licEdPda]=W3.PublicKey.findProgramAddressSync(
       [Buffer.from('metadata'),metaProg.toBuffer(),licMintPk.toBuffer(),Buffer.from('edition')],metaProg);
 
-    // Anchor discriminator: SHA256("global:purchase_license")[0..8]
-    const discH=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('global:purchase_license')));
+    // Anchor discriminator: SHA256("global:purchase_license_simple")[0..8]
+    const discH=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('global:purchase_license_simple')));
     const discrim=discH.slice(0,8);
 
-    // Serialize instruction data (Borsh)
+    // Serialize instruction data (Borsh): domain, unlock_threshold, tls_cert_fingerprint, install_url, domain_hash
     const domB=new TextEncoder().encode(normDom);
-    const threshold=parseInt(S.v.UNSEAL_THRESHOLD||'3')||3;
+    const threshold=Math.min(Math.max(parseInt(S.v.UNSEAL_THRESHOLD||'3')||3,1),10);
     const instUrl=`https://admin.${dom}`;
     const instB=new TextEncoder().encode(instUrl);
-    const nMem=Math.max(parseInt(S.v.TOTAL_KEYHOLDERS||'1')||1,1);
-    const mThr=Math.max(threshold,1);
     const tlsFP=new Uint8Array(32);
 
-    const dLen=8+4+domB.length+1+32+4+instB.length+32+2+2;
+    const dLen=8+4+domB.length+1+32+4+instB.length+32;
     const data=new Uint8Array(dLen);let p=0;
     data.set(discrim,p);p+=8;
     data[p]=domB.length&0xff;data[p+1]=(domB.length>>8)&0xff;data[p+2]=(domB.length>>16)&0xff;data[p+3]=(domB.length>>24)&0xff;p+=4;
@@ -768,9 +788,10 @@ async function purchaseLicense(){
     data[p]=instB.length&0xff;data[p+1]=(instB.length>>8)&0xff;data[p+2]=(instB.length>>16)&0xff;data[p+3]=(instB.length>>24)&0xff;p+=4;
     data.set(instB,p);p+=instB.length;
     data.set(domHash,p);p+=32;
-    data[p]=nMem&0xff;data[p+1]=(nMem>>8)&0xff;p+=2;
-    data[p]=mThr&0xff;data[p+1]=(mThr>>8)&0xff;p+=2;
 
+    // Accounts: registry, reseller_entry, license_entry, domain_claim, buyer, reseller_owner,
+    //           treasury, master_nft_mint, master_edition, license_nft_mint, license_edition,
+    //           system_program, token_program
     const keys=[
       {pubkey:registryPda,isSigner:false,isWritable:true},
       {pubkey:resellerPda,isSigner:false,isWritable:true},
@@ -783,8 +804,6 @@ async function purchaseLicense(){
       {pubkey:masterEdPda,isSigner:false,isWritable:false},
       {pubkey:licMintPk,isSigner:false,isWritable:false},
       {pubkey:licEdPda,isSigner:false,isWritable:false},
-      {pubkey:sqVPk,isSigner:false,isWritable:false},
-      {pubkey:sqMPk,isSigner:false,isWritable:false},
       {pubkey:W3.SystemProgram.programId,isSigner:false,isWritable:false},
       {pubkey:tokProg,isSigner:false,isWritable:false},
     ];
@@ -795,12 +814,16 @@ async function purchaseLicense(){
     const tx=new W3.Transaction({recentBlockhash:blockhash,feePayer:buyerPk});
     tx.add(ix);
 
+    el.innerHTML+='<div style="color:var(--dm);font-size:.72rem;padding:2px 0">⏳ Waiting for wallet signature…</div>';
     const signed=await cw.p.signTransaction(tx);
     const sig=await conn.sendRawTransaction(signed.serialize());
+    el.innerHTML+='<div style="color:var(--dm);font-size:.72rem;padding:2px 0">⏳ Confirming transaction…</div>';
     await conn.confirmTransaction(sig,'confirmed');
 
-    toast('License purchased! TX: '+sig.slice(0,12)+'…');
-    S.v.MELUSINA_LICENSE_NFT=licMint;save();
+    toast('✅ License purchased! TX: '+sig.slice(0,12)+'…');
+    S.v.MELUSINA_LICENSE_NFT=licMint;
+    const fi=document.querySelector('[data-k="MELUSINA_LICENSE_NFT"]');if(fi)fi.value=licMint;
+    save();
     setTimeout(()=>checkDomainLicense(),2000);
   }catch(e){
     toast('Purchase failed: '+e.message);
