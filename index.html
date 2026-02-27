@@ -179,15 +179,29 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 <!-- 1. DOMAIN — the most important thing -->
 <div class="sec"><div class="sec-t">Deployment Domain <span class="hq" onclick="showHelp('sec-domain',event)">?</span></div>
 <div class="card">
-  <div class="f"><label>Domain <span class="hq" onclick="showHelp('MELUSINA_DOMAIN',event)">?</span></label><input data-k="MELUSINA_DOMAIN" placeholder="app.melusina-os.org" oninput="deriveDns();debounceLicenseCheck()"></div>
+  <div class="f" id="domain-input-wrap">
+    <label>Domain <span class="hq" onclick="showHelp('MELUSINA_DOMAIN',event)">?</span></label>
+    <!-- BYOD mode (default): full domain input -->
+    <div id="domain-byod"><input data-k="MELUSINA_DOMAIN" placeholder="app.melusina-os.org" oninput="deriveDns();debounceLicenseCheck()"></div>
+    <!-- Label mode: label + .base_domain suffix -->
+    <div id="domain-label" style="display:none">
+      <div style="display:flex;align-items:center;gap:0">
+        <input id="subdomain-label-input" placeholder="myname" style="border-radius:7px 0 0 7px;border-right:none;min-width:120px;flex:1" oninput="onLabelInput(this.value)">
+        <span id="domain-suffix" style="padding:7px 12px;background:var(--s2);border:1px solid var(--bd);border-radius:0 7px 7px 0;font-size:.82rem;color:var(--dm);white-space:nowrap;font-family:monospace">.dev.pbay.app</span>
+      </div>
+      <div style="font-size:.62rem;color:var(--dm);margin-top:3px">Pick your subdomain — your reseller provides the base domain</div>
+    </div>
+  </div>
   <div id="dns-derived"></div>
   <div id="license-check" style="margin-top:8px"></div>
-  <div style="font-size:.72rem;color:var(--dm);margin-top:10px">Do you own this domain? <span class="hq" onclick="showHelp('zone-sovereignty',event)">?</span></div>
-  <div class="chs" style="margin-top:4px">
-    <div class="ch on" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="subdomain" onclick="pickR(this)" title="e.g. app.yourreseller.com — reseller controls the parent domain">No, it's a subdomain</div>
-    <div class="ch" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="full" onclick="pickR(this)" title="e.g. mycompany.com — you control the entire DNS zone">Yes, I own it</div>
+  <div id="zone-sov-wrap">
+    <div style="font-size:.72rem;color:var(--dm);margin-top:10px">Do you own this domain? <span class="hq" onclick="showHelp('zone-sovereignty',event)">?</span></div>
+    <div class="chs" style="margin-top:4px">
+      <div class="ch on" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="subdomain" onclick="pickR(this)" title="e.g. app.yourreseller.com — reseller controls the parent domain">No, it's a subdomain</div>
+      <div class="ch" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="full" onclick="pickR(this)" title="e.g. mycompany.com — you control the entire DNS zone">Yes, I own it</div>
+    </div>
+    <div id="zone-hint" style="font-size:.62rem;color:var(--dm);margin-top:4px">Most buyers use a subdomain provided by their reseller. Choose "Yes, I own it" only if you registered the domain yourself.</div>
   </div>
-  <div id="zone-hint" style="font-size:.62rem;color:var(--dm);margin-top:4px">Most buyers use a subdomain provided by their reseller. Choose "Yes, I own it" only if you registered the domain yourself.</div>
   <details><summary>Extra DNS records <span class="hq" onclick="showHelp('EXTRA_DNS',event)">?</span></summary>
     <div class="f"><label>One record per line</label><textarea data-k="EXTRA_DNS" placeholder="mail  A  1.2.3.4&#10;_dmarc  TXT  v=DMARC1; p=none&#10;mx  MX  10 mail.example.com" style="min-height:80px"></textarea>
       <div class="h">Format: name  type  value (space or tab separated)</div></div>
@@ -403,7 +417,7 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 const HELP={
   // -- Section: Domain --
   'sec-domain':'<p>The domain where your Melusina instance will be accessible. This is the URL your users will visit.</p><p>Example: <code>app.mycompany.com</code> or <code>melusina.example.org</code></p>',
-  'MELUSINA_DOMAIN':'<p>The fully-qualified domain name (FQDN) for your deployment.</p><p>If your reseller gave you a subdomain like <code>yourname.reseller.com</code>, enter that. If you own <code>mycompany.com</code> and want to deploy there, enter that.</p><p>This domain will be used for TLS certificates, DNS records, and the public URL of your instance.</p>',
+  'MELUSINA_DOMAIN':'<p>The domain for your deployment.</p><p><b>Subdomain mode</b>: If your reseller provides a base domain (e.g. <code>.dev.pbay.app</code>), you just pick a label like <code>myname</code> and get <code>myname.dev.pbay.app</code> — baked into your license NFT.</p><p><b>BYOD mode</b>: If the reseller has no base domain, enter a full FQDN you own, like <code>app.mycompany.com</code>.</p>',
   'zone-sovereignty':'<p><b>No, it\'s a subdomain</b> — Your reseller or hosting provider owns the parent domain (e.g. <code>app.theirsite.com</code>). They manage the DNS zone. Most common for buyers.</p><p><b>Yes, I own it</b> — You registered this domain yourself (e.g. <code>mycompany.com</code>) and control its DNS zone at a registrar like Cloudflare, Namecheap, etc.</p>',
   'EXTRA_DNS':'<p>Additional DNS records to create in your zone. One per line.</p><p>Format: <code>name  type  value</code></p><p>Example:<br><code>mail A 1.2.3.4</code><br><code>_dmarc TXT "v=DMARC1; p=none"</code></p><p>Leave blank if you don\'t need extra records.</p>',
 
@@ -920,8 +934,11 @@ async function fetchResellers(){
       const hp=d[o];o+=1;if(hp)o+=32;o+=8;
       const hc=d[o];o+=1;let cat='';if(hc){const c=rS(d,o);cat=c.v;o=c.e}
       const status=d[o];o+=1;o+=8;const hasRev=d[o];o+=1;if(hasRev)o+=8;o+=1;
-      const price=rU(d,o);
-      if(status===0)_rl.push({mint,owner,name:nR.v,terr:tR.v,lim,iss,cat,top:!hp,mOk:mm===KNOWN_MASTER,price})}
+      const price=rU(d,o);o+=8;
+      // base_domain: Option<String> (added in v3 migration)
+      let baseDomain='';
+      if(o<d.length){const bdTag=d[o];o+=1;if(bdTag===1){const bd=rS(d,o);baseDomain=bd.v;o=bd.e;}}
+      if(status===0)_rl.push({mint,owner,name:nR.v,terr:tR.v,lim,iss,cat,top:!hp,mOk:mm===KNOWN_MASTER,price,baseDomain})}
     renderResellers();
   }catch(e){el.innerHTML=`<div style="font-size:.72rem;color:var(--rd)">✗ ${esc(e.message)}</div>`}}
 
@@ -941,8 +958,9 @@ function renderResellers(){
   let h='<div style="display:flex;flex-direction:column;gap:6px">';
   _rl.filter(r=>r.top).forEach(r=>{const s=S.v.RESELLER_NFT_MINT===r.mint,rem=r.lim-r.iss;
     const ps=r.price>0?`<b style="color:var(--gn)">${(r.price/1e9).toFixed(2)} SOL</b>`:'<span style="color:var(--dm)">No price</span>';
+    const bd=r.baseDomain?`<span style="font-size:.58rem;color:var(--ac);margin-left:4px">🌐 .${esc(r.baseDomain)}</span>`:'';
     h+=`<div class="sv${s?' on':''}" onclick="pickReseller('${r.mint}')" style="cursor:pointer"><div class="sv-i">🏪</div>
-      <div class="sv-info"><div class="sv-n">${esc(r.name)}</div><div class="sv-d">${esc(r.terr)}${r.cat?' · '+esc(r.cat):''} · ${rem} remaining · ${ps}</div></div>
+      <div class="sv-info"><div class="sv-n">${esc(r.name)}${bd}</div><div class="sv-d">${esc(r.terr)}${r.cat?' · '+esc(r.cat):''} · ${rem} remaining · ${ps}</div></div>
       <span style="font-size:.6rem;color:${r.mOk?'var(--gn)':'var(--rd)'}">${r.mOk?'✓':'✗'} Master</span></div>`});
   const sub=_rl.filter(r=>!r.top);
   if(sub.length){h+=`<details style="margin-top:2px"><summary style="font-size:.68rem;color:var(--dm)">${sub.length} sub-reseller${sub.length>1?'s':''}</summary>`;
@@ -954,7 +972,50 @@ function renderResellers(){
 
 function pickReseller(mint){const r=_rl.find(x=>x.mint===mint);
   S.v.RESELLER_NFT_MINT=mint;S.v.RESELLER_NAME=r?.name||'';save();renderResellers();updateStoreStatus();reflow();
+  // Switch domain input mode based on base_domain
+  updateDomainMode(r);
   if(S.v.MELUSINA_DOMAIN&&!_licData)debounceLicenseCheck()}
+
+function getSelectedReseller(){return _rl.find(r=>r.mint===S.v.RESELLER_NFT_MINT)||null}
+
+function updateDomainMode(r){
+  const byod=document.getElementById('domain-byod'),lbl=document.getElementById('domain-label');
+  const sovWrap=document.getElementById('zone-sov-wrap');
+  if(!byod||!lbl)return;
+  if(r&&r.baseDomain){
+    // Label mode — reseller provides base_domain
+    byod.style.display='none';lbl.style.display='block';
+    document.getElementById('domain-suffix').textContent='.'+r.baseDomain;
+    // Hide sovereignty picker — always "subdomain" in label mode
+    if(sovWrap)sovWrap.style.display='none';
+    S.v.MELUSINA_ZONE_SOVEREIGNTY='subdomain';
+    // If we had a full domain from BYOD mode, try to extract the label
+    const cur=(S.v.MELUSINA_DOMAIN||'').toLowerCase();
+    const inp=document.getElementById('subdomain-label-input');
+    if(cur.endsWith('.'+r.baseDomain)){inp.value=cur.replace('.'+r.baseDomain,'');}
+    else if(!cur.includes('.')){inp.value=cur;} // looks like a label already
+    else{inp.value='';}
+    if(inp.value)onLabelInput(inp.value);
+  }else{
+    // BYOD mode — full domain input
+    byod.style.display='block';lbl.style.display='none';
+    if(sovWrap)sovWrap.style.display='';
+  }
+}
+
+function onLabelInput(val){
+  val=val.toLowerCase().replace(/[^a-z0-9-]/g,'');
+  const inp=document.getElementById('subdomain-label-input');
+  if(inp&&inp.value!==val)inp.value=val;
+  const r=getSelectedReseller();
+  if(!r||!r.baseDomain)return;
+  const fullDom=val?val+'.'+r.baseDomain:'';
+  S.v.MELUSINA_DOMAIN=fullDom;
+  // Also update the hidden data-k input so the main env export picks it up
+  const mainInp=document.querySelector('[data-k="MELUSINA_DOMAIN"]');
+  if(mainInp)mainInp.value=fullDom;
+  save();deriveDns();debounceLicenseCheck();
+}
 
 function updateStoreStatus(){const el=document.getElementById('store-status');if(!el)return;
   if(!S.v.RESELLER_NFT_MINT)el.innerHTML='<span style="color:var(--or)">⚠ Select a reseller above first — the store provides the latest verified tarball via your reseller</span>';
@@ -1009,6 +1070,20 @@ async function purchaseLicense(){
   const selR=_rl.find(r=>r.mint===resMint);
   if(!selR||!selR.price||selR.price===0){toast('Reseller has no price set');return}
 
+  // Determine what to send as `domain` arg and what to hash
+  // If reseller has base_domain → domain arg = label only, hash = SHA-256(label.base_domain)
+  // Otherwise → domain arg = full FQDN, hash = SHA-256(full FQDN)
+  let domainArg, fullDomForHash;
+  if(selR.baseDomain){
+    const label=dom.replace('.'+selR.baseDomain,'');
+    if(!label||label.includes('.')){toast('Invalid subdomain label');return}
+    domainArg=label;
+    fullDomForHash=dom.replace(/\.$/,'').toLowerCase();
+  }else{
+    domainArg=dom.replace(/\.$/,'').toLowerCase();
+    fullDomForHash=domainArg;
+  }
+
   const el=document.getElementById('license-check');
   el.innerHTML+='<div style="color:var(--dm);font-size:.72rem;padding:4px 0;margin-top:4px">⏳ Finding available edition…</div>';
 
@@ -1035,8 +1110,7 @@ async function purchaseLicense(){
     const [registryPda]=W3.PublicKey.findProgramAddressSync([_e('registry'),masterMint.toBytes()],prog);
     const [resellerPda]=W3.PublicKey.findProgramAddressSync([_e('reseller'),resMintPk.toBytes()],prog);
     const [licensePda]=W3.PublicKey.findProgramAddressSync([_e('license'),licMintPk.toBytes()],prog);
-    const normDom=dom.replace(/\.$/,'').toLowerCase();
-    const domHash=new Uint8Array(await crypto.subtle.digest('SHA-256',_e(normDom)));
+    const domHash=new Uint8Array(await crypto.subtle.digest('SHA-256',_e(fullDomForHash)));
     const [domClaimPda]=W3.PublicKey.findProgramAddressSync([_e('domain_claim'),domHash],prog);
     const [treasuryPda]=W3.PublicKey.findProgramAddressSync([_e('treasury'),masterMint.toBytes()],prog);
     const [masterEdPda]=W3.PublicKey.findProgramAddressSync(
@@ -1049,9 +1123,9 @@ async function purchaseLicense(){
     const discrim=discH.slice(0,8);
 
     // Serialize instruction data (Borsh): domain, unlock_threshold, tls_cert_fingerprint, install_url, domain_hash
-    const domB=new TextEncoder().encode(normDom);
+    const domB=new TextEncoder().encode(domainArg);
     const threshold=Math.min(Math.max(parseInt(S.v.UNSEAL_THRESHOLD||'3')||3,1),10);
-    const instUrl=`https://admin.${dom}`;
+    const instUrl=`https://admin.${fullDomForHash}`;
     const instB=new TextEncoder().encode(instUrl);
     const tlsFP=new Uint8Array(32);
 
