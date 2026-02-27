@@ -139,10 +139,12 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
   <div class="f"><label>Domain</label><input data-k="MELUSINA_DOMAIN" placeholder="app.melusina-os.org" oninput="deriveDns();debounceLicenseCheck()"></div>
   <div id="dns-derived"></div>
   <div id="license-check" style="margin-top:8px"></div>
-  <div class="chs" style="margin-top:8px">
-    <div class="ch on" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="subdomain" onclick="pickR(this)">Subdomain</div>
-    <div class="ch" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="full" onclick="pickR(this)">Full Zone</div>
+  <div style="font-size:.72rem;color:var(--dm);margin-top:10px">Do you own this domain?</div>
+  <div class="chs" style="margin-top:4px">
+    <div class="ch on" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="subdomain" onclick="pickR(this)" title="e.g. app.yourreseller.com — reseller controls the parent domain">No, it's a subdomain</div>
+    <div class="ch" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="full" onclick="pickR(this)" title="e.g. mycompany.com — you control the entire DNS zone">Yes, I own it</div>
   </div>
+  <div id="zone-hint" style="font-size:.62rem;color:var(--dm);margin-top:4px">Most buyers use a subdomain provided by their reseller. Choose "Yes, I own it" only if you registered the domain yourself.</div>
   <details><summary>Extra DNS records</summary>
     <div class="f"><label>One record per line</label><textarea data-k="EXTRA_DNS" placeholder="mail  A  1.2.3.4&#10;_dmarc  TXT  v=DMARC1; p=none&#10;mx  MX  10 mail.example.com" style="min-height:80px"></textarea>
       <div class="h">Format: name  type  value (space or tab separated)</div></div>
@@ -314,8 +316,8 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 <div class="card">
   <div class="tr"><div class="tr-l">Auto-boot on restart</div><button class="tgl on" data-k="MELUSINA_AUTO_BOOT" onclick="toggleK(this)"></button></div>
   <div class="tr"><div class="tr-l">Auto-start sidecars</div><button class="tgl on" data-k="MELUSINA_SIDECAR_AUTOSTART" onclick="toggleK(this)"></button></div>
-  <div class="tr"><div class="tr-l">Manage parent zone DNS</div><button class="tgl" data-k="MANAGE_ZONE_DNS" onclick="toggleK(this)"></button></div>
   <details><summary>WireGuard, timeouts, paths &amp; networking</summary>
+    <div class="tr" style="margin-bottom:6px"><div><div class="tr-l">Auto-manage DNS records</div><div class="tr-d">Let the deployer create DNS records in the parent zone (requires API access to your DNS provider)</div></div><button class="tgl" data-k="MANAGE_ZONE_DNS" onclick="toggleK(this)"></button></div>
     <div class="row3"><div class="f"><label>WG Port</label><input type="number" data-k="MELUSINA_WG_PORT" placeholder="51820"></div><div class="f"><label>WG Gateway IP</label><input data-k="MELUSINA_WG_AWS_IP" placeholder="10.200.0.1"></div><div class="f"><label>WG VM IP</label><input data-k="MELUSINA_WG_VM_IP" placeholder="10.200.0.2"></div></div>
     <div class="row3"><div class="f"><label>Deploy Timeout</label><input type="number" data-k="MELUSINA_DEPLOY_TIMEOUT" placeholder="600"></div><div class="f"><label>Health Interval</label><input type="number" data-k="MELUSINA_HEALTH_INTERVAL" placeholder="30"></div><div class="f"><label>DNS TTL</label><input type="number" data-k="MELUSINA_DNS_TTL" placeholder="300"></div></div>
     <div class="row"><div class="f"><label>MTU</label><input type="number" data-k="MELUSINA_MTU" placeholder="1420"></div><div class="f"><label>Cert Email</label><input data-k="MELUSINA_CERT_EMAIL"></div></div>
