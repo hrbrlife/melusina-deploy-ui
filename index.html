@@ -526,7 +526,7 @@ function deriveKh(){
 let cw=null;
 function getWalletProvider(n){
   if(n==='phantom') return window.phantom?.solana||((window.solana?.isPhantom&&!window.solana?.isSolflare)?window.solana:null);
-  if(n==='solflare') return window.solflare?.isSolflare?window.solflare:(window.solana?.isSolflare?window.solana:null);
+  if(n==='solflare') return window.solflare||window.Solflare||(window.solana?.isSolflare?window.solana:null);
   if(n==='backpack') return window.backpack||window.xnft?.solana||null;
   return null;
 }
@@ -599,15 +599,20 @@ async function checkDomainLicense(){
       {memcmp:{offset:112,bytes:b64e(fb),encoding:'base64'}}]}]);
     if(!res||!res.length){_licData=null;
       const selR=_rl.find(r=>r.mint===S.v.RESELLER_NFT_MINT);
+      const walletStatus=cw
+        ?`<div style="font-size:.72rem;color:var(--gn);margin-bottom:6px">✓ Wallet connected: <span class="mono">${cw.pub.slice(0,4)}…${cw.pub.slice(-4)}</span></div>`
+        :`<div style="margin-bottom:8px"><div style="font-size:.68rem;color:var(--or);margin-bottom:4px">Connect your wallet to buy:</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="wb" onclick="connectW('phantom')">👻 Phantom</button><button class="wb" onclick="connectW('solflare')">🔆 Solflare</button><button class="wb" onclick="connectW('backpack')">🎒 Backpack</button></div></div>`;
       const buyInfo=selR&&selR.price>0
-        ?`<div class="buy-box"><div class="buy-t">💳 Purchase Available</div>
-           <div class="buy-d">Reseller <b>${esc(selR.name)}</b> — one-click license for <b>${esc(dom)}</b></div>
+        ?`<div class="buy-box"><div class="buy-t">💳 Buy License</div>
+           <div class="buy-d">One-click license for <b>${esc(dom)}</b> via <b>${esc(selR.name)}</b></div>
            <div class="buy-p">${(selR.price/1e9).toFixed(2)} SOL</div>
+           ${walletStatus}
            <div id="edition-status" style="font-size:.68rem;color:var(--dm);margin-bottom:6px">Checking available editions…</div>
-           <button class="buy-btn" onclick="purchaseLicense()">🛒 Buy License — ${(selR.price/1e9).toFixed(2)} SOL</button>
-           <div style="font-size:.62rem;color:var(--dm);margin-top:6px">⚠ Wallet must be connected. Your wallet becomes the license owner.</div></div>`
-        :(S.v.RESELLER_NFT_MINT?'<div style="font-size:.68rem;color:var(--dm);margin-top:4px">Selected reseller has no price set — fetch resellers to see pricing</div>'
-        :'<div style="font-size:.68rem;color:var(--dm);margin-top:4px">Select a reseller above to see purchase options</div>');
+           <button class="buy-btn" onclick="purchaseLicense()"${cw?'':' disabled'}>🛒 Buy License — ${(selR.price/1e9).toFixed(2)} SOL</button>
+           ${cw?'':'<div style="font-size:.62rem;color:var(--or);margin-top:4px">↑ Connect wallet first</div>'}</div>`
+        :(!_rl.length?'<div style="font-size:.68rem;color:var(--dm);margin-top:4px">⏳ Loading resellers…</div>'
+        :(S.v.RESELLER_NFT_MINT?'<div style="font-size:.68rem;color:var(--dm);margin-top:4px">Selected reseller has no price set</div>'
+        :'<div style="font-size:.68rem;color:var(--dm);margin-top:4px">Select a reseller above to purchase</div>'));
       el.innerHTML=`<div style="padding:8px 12px;background:rgba(210,153,34,.06);border:1px solid var(--or);border-radius:8px;font-size:.72rem"><span style="color:var(--or)">⚠ No license found on <b>${esc(S.v.BLOCKCHAIN_NETWORK)}</b></span></div>${buyInfo}`;
       if(selR&&selR.price>0)updateEditionStatus();
       return}
@@ -985,9 +990,18 @@ function boot(){
   document.querySelectorAll('.ch[data-r]').forEach(el=>el.classList.toggle('on',S.v[el.dataset.r]===el.dataset.v));
   document.querySelectorAll('.tgl[data-k]').forEach(b=>b.classList.toggle('on',S.v[b.dataset.k]==='true'));
   detectW();renderResellers();
+  // Auto-fetch resellers so user doesn't have to click a button
+  fetchResellers().then(()=>{
+    // Auto-select first top-level reseller if none selected
+    if(!S.v.RESELLER_NFT_MINT&&_rl.length){
+      const top=_rl.find(r=>r.top);if(top)pickReseller(top.mint);
+    }
+  }).catch(()=>{});
   if(S.v.MELUSINA_DOMAIN)debounceLicenseCheck();
   // Re-detect wallets after extensions have time to inject (some are slow)
   setTimeout(detectW,1000);setTimeout(detectW,3000);
+  // Also re-detect at 5s for Solflare which can be very slow to inject
+  setTimeout(detectW,5000);
 }
 load();boot();
 </script>
