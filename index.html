@@ -705,7 +705,7 @@ async function findAvailableEdition(){
   const conn=new W3.Connection(solUrl());
   for(const mint of KNOWN_EDITIONS){
     const mintPk=new W3.PublicKey(mint);
-    const [licensePda]=W3.PublicKey.findProgramAddressSync([new TextEncoder().encode('license'),mintPk.toBuffer()],prog);
+    const [licensePda]=W3.PublicKey.findProgramAddressSync([new TextEncoder().encode('license'),mintPk.toBytes()],prog);
     const info=await conn.getAccountInfo(licensePda);
     if(!info){_selectedEdition=mint;return mint}
   }
@@ -756,17 +756,17 @@ async function purchaseLicense(){
 
     // Derive PDAs
     const _e=s=>new TextEncoder().encode(s);
-    const [registryPda]=W3.PublicKey.findProgramAddressSync([_e('registry'),masterMint.toBuffer()],prog);
-    const [resellerPda]=W3.PublicKey.findProgramAddressSync([_e('reseller'),resMintPk.toBuffer()],prog);
-    const [licensePda]=W3.PublicKey.findProgramAddressSync([_e('license'),licMintPk.toBuffer()],prog);
+    const [registryPda]=W3.PublicKey.findProgramAddressSync([_e('registry'),masterMint.toBytes()],prog);
+    const [resellerPda]=W3.PublicKey.findProgramAddressSync([_e('reseller'),resMintPk.toBytes()],prog);
+    const [licensePda]=W3.PublicKey.findProgramAddressSync([_e('license'),licMintPk.toBytes()],prog);
     const normDom=dom.replace(/\.$/,'').toLowerCase();
     const domHash=new Uint8Array(await crypto.subtle.digest('SHA-256',_e(normDom)));
     const [domClaimPda]=W3.PublicKey.findProgramAddressSync([_e('domain_claim'),domHash],prog);
-    const [treasuryPda]=W3.PublicKey.findProgramAddressSync([_e('treasury'),masterMint.toBuffer()],prog);
+    const [treasuryPda]=W3.PublicKey.findProgramAddressSync([_e('treasury'),masterMint.toBytes()],prog);
     const [masterEdPda]=W3.PublicKey.findProgramAddressSync(
-      [_e('metadata'),metaProg.toBuffer(),masterMint.toBuffer(),_e('edition')],metaProg);
+      [_e('metadata'),metaProg.toBytes(),masterMint.toBytes(),_e('edition')],metaProg);
     const [licEdPda]=W3.PublicKey.findProgramAddressSync(
-      [_e('metadata'),metaProg.toBuffer(),licMintPk.toBuffer(),_e('edition')],metaProg);
+      [_e('metadata'),metaProg.toBytes(),licMintPk.toBytes(),_e('edition')],metaProg);
 
     // Anchor discriminator: SHA256("global:purchase_license_simple")[0..8]
     const discH=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('global:purchase_license_simple')));
