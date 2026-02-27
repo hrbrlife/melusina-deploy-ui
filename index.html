@@ -248,6 +248,11 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
     <div id="kh-info" style="display:flex;flex-direction:column;justify-content:end;padding-bottom:10px"></div>
   </div>
   <details><summary>Squads Multisig, Program IDs &amp; RPC</summary>
+    <div style="margin-bottom:8px">
+      <button class="brb" onclick="createSquadsMultisig()" style="padding:6px 14px;font-size:.72rem;font-weight:600">🔐 Auto-Create Squads Multisig</button>
+      <div style="font-size:.62rem;color:var(--dm);margin-top:4px">Creates a Squads V4 multisig from your keyholders &amp; threshold above. Wallet must be connected.</div>
+      <div id="squads-status" style="font-size:.7rem;margin-top:4px"></div>
+    </div>
     <div class="row"><div class="f"><label>Multisig</label><input class="mono" data-k="SQUADS_MULTISIG"></div><div class="f"><label>Vault</label><input class="mono" data-k="SQUADS_VAULT"></div></div>
     <div class="f"><label>Master NFT</label><input class="mono" data-k="MASTER_NFT_MINT"></div>
     <div class="row"><div class="f"><label>Program ID</label><input data-k="MELUSINA_PROGRAM_ID"></div><div class="f"><label>Governance ID</label><input data-k="MELUSINA_GOVERNANCE_ID"></div></div>
@@ -526,7 +531,13 @@ function deriveKh(){
 let cw=null;
 function getWalletProvider(n){
   if(n==='phantom') return window.phantom?.solana||((window.solana?.isPhantom&&!window.solana?.isSolflare)?window.solana:null);
-  if(n==='solflare') return window.solflare||window.Solflare||(window.solana?.isSolflare?window.solana:null);
+  if(n==='solflare'){
+    // Solflare injects in multiple ways depending on version
+    if(window.solflare&&typeof window.solflare.connect==='function') return window.solflare;
+    if(window.Solflare&&typeof window.Solflare.connect==='function') return window.Solflare;
+    if(window.solana?.isSolflare) return window.solana;
+    return null;
+  }
   if(n==='backpack') return window.backpack||window.xnft?.solana||null;
   return null;
 }
@@ -538,11 +549,28 @@ function detectW(){const m={phantom:!!getWalletProvider('phantom'),solflare:!!ge
 }
 async function connectW(n){
   const p=getWalletProvider(n);
-  if(!p){toast(n+' wallet not detected — is the browser extension installed and enabled on this site? Try refreshing.');return}
-  try{const r=await p.connect();
-    const pk=r?.publicKey||p.publicKey;
-    const pub=pk?.toBase58?.()||pk?.toString?.()||'';
-    if(!pub)throw new Error('No key');cw={n,pub,p};
+  if(!p){toast(n+' wallet not detected — is the extension installed? Try refreshing the page.');return}
+  try{
+    let pub='';
+    // Try connecting
+    const r=await p.connect();
+    // Different wallets put publicKey in different places
+    const pk=r?.publicKey||p.publicKey||p.account?.publicKey;
+    if(pk){
+      pub=typeof pk.toBase58==='function'?pk.toBase58():(typeof pk.toString==='function'?pk.toString():'');
+    }
+    // Solflare sometimes needs a moment — poll for publicKey
+    if(!pub&&p.publicKey===null){
+      for(let i=0;i<10;i++){
+        await new Promise(r=>setTimeout(r,200));
+        if(p.publicKey){pub=p.publicKey.toBase58?.()??p.publicKey.toString();break}
+      }
+    }
+    if(!pub){
+      console.error('Wallet connect debug:',{r,pPub:p.publicKey,pConnected:p.isConnected,pKeys:Object.keys(p)});
+      throw new Error('Wallet connected but no public key returned. Try disconnecting in your wallet extension and reconnecting.');
+    }
+    cw={n,pub,p};
     document.getElementById('w-info').textContent=pub.slice(0,4)+'…'+pub.slice(-4);
     document.getElementById('w-dc').style.display='';
     document.querySelectorAll('.wb').forEach(b=>b.classList.toggle('on',b.dataset.w===n));
@@ -550,10 +578,25 @@ async function connectW(n){
     if(op&&!op.value){op.value=pub;S.v.OPERATOR_WALLET=pub;save()}
     toast('Connected: '+pub.slice(0,6)+'…');
     if(S.v.MELUSINA_DOMAIN)debounceLicenseCheck();
-  }catch(e){toast('Failed: '+e.message)}
+  }catch(e){toast('Failed: '+e.message);console.error('Wallet error:',e)}
 }
 async function autoConnect(){
-  for(const n of['solflare','phantom','backpack']){const p=getWalletProvider(n);if(p){try{await connectW(n);return true}catch(e){}}}
+  for(const n of['phantom','solflare','backpack']){
+    const p=getWalletProvider(n);
+    if(!p)continue;
+    // Check if already connected
+    const pk=p.publicKey;
+    if(pk){
+      const pub=pk.toBase58?.()??pk.toString();
+      if(pub){cw={n,pub,p};return true}
+    }
+    // Try eager connect (won't show popup if previously approved)
+    try{
+      const r=await p.connect({onlyIfTrusted:true});
+      const k=r?.publicKey||p.publicKey;
+      if(k){const pub=k.toBase58?.()??k.toString();if(pub){cw={n,pub,p};return true}}
+    }catch(e){/* not previously approved, skip */}
+  }
   return false;
 }
 function disconnectW(){if(cw?.p?.disconnect)cw.p.disconnect();cw=null;
@@ -837,6 +880,113 @@ async function purchaseLicense(){
   }catch(e){
     toast('Purchase failed: '+e.message);
     console.error('Purchase error:',e);
+  }
+}
+
+// ═══════════════ AUTO-CREATE SQUADS MULTISIG ═══════════════
+const SQUADS_PROG_ID='SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf';
+
+async function createSquadsMultisig(){
+  const el=document.getElementById('squads-status');
+  if(!cw){toast('Connect wallet first');if(el)el.innerHTML='<span style="color:var(--or)">⚠ Connect wallet first</span>';return}
+
+  const kh=(S.v.SOLANA_KEYHOLDERS||'').replace(/\n/g,',').split(',').map(w=>w.trim()).filter(Boolean);
+  const thr=Math.max(parseInt(S.v.UNSEAL_THRESHOLD||'2')||2,1);
+
+  // Always include the connected wallet as a member
+  const memberSet=new Set(kh);
+  memberSet.add(cw.pub);
+  const members=[...memberSet];
+
+  if(members.length<1){toast('Add keyholders first');if(el)el.innerHTML='<span style="color:var(--or)">⚠ Add keyholders in the field above</span>';return}
+  if(thr>members.length){toast('Threshold ('+thr+') exceeds member count ('+members.length+')');return}
+
+  if(el)el.innerHTML='<span style="color:var(--dm)">⏳ Creating Squads V4 multisig ('+members.length+' members, threshold '+thr+')…</span>';
+
+  try{
+    const W3=window.solanaWeb3;if(!W3)throw Error('Solana web3.js not loaded');
+    const _e=s=>new TextEncoder().encode(s);
+    const conn=new W3.Connection(solUrl());
+    const squadsProg=new W3.PublicKey(SQUADS_PROG_ID);
+    const buyerPk=new W3.PublicKey(cw.pub);
+
+    // Generate a random create_key for the multisig
+    const createKey=W3.Keypair.generate();
+
+    // Derive multisig PDA: seeds = ["multisig", create_key]
+    const [multisigPda]=W3.PublicKey.findProgramAddressSync(
+      [_e('multisig'),createKey.publicKey.toBytes()],squadsProg);
+
+    // Derive vault PDA: seeds = ["multisig", multisig_pda, u8(0)]  (vault index 0)
+    const [vaultPda]=W3.PublicKey.findProgramAddressSync(
+      [_e('multisig'),multisigPda.toBytes(),new Uint8Array([0])],squadsProg);
+
+    // Build multisig_create_v2 instruction
+    // Discriminator: SHA256("global:multisig_create_v2")[0..8]
+    const discH=new Uint8Array(await crypto.subtle.digest('SHA-256',_e('global:multisig_create_v2')));
+    const disc=discH.slice(0,8);
+
+    // Serialize args: config_authority(Option<Pubkey>), threshold(u16), members(Vec<Member>), time_lock(u32), memo(Option<String>)
+    // Member = { key: Pubkey, permissions: u8 }  — Permissions.all() = 7 (Proposer|Voter|Executor)
+    const memberBytes=new Uint8Array(4+members.length*33);
+    memberBytes[0]=members.length&0xff;memberBytes[1]=(members.length>>8)&0xff;
+    memberBytes[2]=(members.length>>16)&0xff;memberBytes[3]=(members.length>>24)&0xff;
+    members.forEach((m,i)=>{
+      const pk=new W3.PublicKey(m);
+      memberBytes.set(pk.toBytes(),4+i*33);
+      memberBytes[4+i*33+32]=7; // Permissions::all (Proposer|Voter|Executor)
+    });
+
+    // config_authority = None (0x00), threshold = u16, members, time_lock = 0, memo = None (0x00)
+    const dLen=8+1+2+memberBytes.length+4+1;
+    const data=new Uint8Array(dLen);let p=0;
+    data.set(disc,p);p+=8;
+    data[p]=0;p+=1; // config_authority = None
+    data[p]=thr&0xff;data[p+1]=(thr>>8)&0xff;p+=2; // threshold u16
+    data.set(memberBytes,p);p+=memberBytes.length; // members vec
+    data[p]=0;data[p+1]=0;data[p+2]=0;data[p+3]=0;p+=4; // time_lock = 0
+    data[p]=0;p+=1; // memo = None
+
+    // Accounts for multisig_create_v2:
+    // 1. multisig (writable, PDA)
+    // 2. create_key (signer)
+    // 3. creator (signer, payer)
+    // 4. system_program
+    const keys=[
+      {pubkey:multisigPda,isSigner:false,isWritable:true},
+      {pubkey:createKey.publicKey,isSigner:true,isWritable:false},
+      {pubkey:buyerPk,isSigner:true,isWritable:true},
+      {pubkey:W3.SystemProgram.programId,isSigner:false,isWritable:false},
+    ];
+
+    const ix=new W3.TransactionInstruction({programId:squadsProg,keys,data});
+    const {blockhash}=await conn.getLatestBlockhash();
+    const tx=new W3.Transaction({recentBlockhash:blockhash,feePayer:buyerPk});
+    tx.add(ix);
+    tx.partialSign(createKey); // create_key must sign
+
+    if(el)el.innerHTML='<span style="color:var(--dm)">⏳ Approve in your wallet…</span>';
+    const signed=await cw.p.signTransaction(tx);
+    const sig=await conn.sendRawTransaction(signed.serialize());
+    if(el)el.innerHTML='<span style="color:var(--dm)">⏳ Confirming…</span>';
+    await conn.confirmTransaction(sig,'confirmed');
+
+    // Fill in the fields
+    const msAddr=multisigPda.toBase58();
+    const vAddr=vaultPda.toBase58();
+    S.v.SQUADS_MULTISIG=msAddr;S.v.SQUADS_VAULT=vAddr;
+    const msEl=document.querySelector('[data-k="SQUADS_MULTISIG"]');if(msEl)msEl.value=msAddr;
+    const vEl=document.querySelector('[data-k="SQUADS_VAULT"]');if(vEl)vEl.value=vAddr;
+    save();
+
+    if(el)el.innerHTML=`<span style="color:var(--gn)">✓ Multisig created!</span><br>
+      <span class="mono" style="font-size:.62rem">${msAddr}</span><br>
+      <span style="font-size:.62rem;color:var(--dm)">Vault: <span class="mono">${vAddr}</span></span>`;
+    toast('✅ Squads multisig created!');
+  }catch(e){
+    if(el)el.innerHTML=`<span style="color:var(--rd)">✗ ${esc(e.message)}</span>`;
+    toast('Squads creation failed: '+e.message);
+    console.error('Squads create error:',e);
   }
 }
 
