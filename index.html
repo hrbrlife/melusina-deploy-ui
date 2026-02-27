@@ -921,46 +921,69 @@ async function createSquadsMultisig(){
     // Generate a random create_key for the multisig
     const createKey=W3.Keypair.generate();
 
-    // Derive multisig PDA: seeds = ["multisig", create_key]
-    const [multisigPda]=W3.PublicKey.findProgramAddressSync(
-      [_e('multisig'),createKey.publicKey.toBytes()],squadsProg);
+    // Derive program_config PDA: seeds = ["multisig", "program_config"]
+    const [programConfigPda]=W3.PublicKey.findProgramAddressSync(
+      [_e('multisig'),_e('program_config')],squadsProg);
 
-    // Derive vault PDA: seeds = ["multisig", multisig_pda, u8(0)]  (vault index 0)
+    // Fetch program_config to get treasury address (offset: 8 disc + 32 authority + 8 fee = 48)
+    const cfgAcct=await conn.getAccountInfo(programConfigPda);
+    if(!cfgAcct)throw Error('Squads program_config not found on this cluster');
+    const treasuryPk=new W3.PublicKey(cfgAcct.data.slice(48,80));
+
+    // Derive multisig PDA: seeds = ["multisig", "multisig", create_key]
+    const [multisigPda]=W3.PublicKey.findProgramAddressSync(
+      [_e('multisig'),_e('multisig'),createKey.publicKey.toBytes()],squadsProg);
+
+    // Derive vault PDA: seeds = ["multisig", "vault", multisig_pda, u8(0)]
     const [vaultPda]=W3.PublicKey.findProgramAddressSync(
-      [_e('multisig'),multisigPda.toBytes(),new Uint8Array([0])],squadsProg);
+      [_e('multisig'),_e('vault'),multisigPda.toBytes(),new Uint8Array([0])],squadsProg);
 
     // Build multisig_create_v2 instruction
     // Discriminator: SHA256("global:multisig_create_v2")[0..8]
     const discH=new Uint8Array(await crypto.subtle.digest('SHA-256',_e('global:multisig_create_v2')));
     const disc=discH.slice(0,8);
 
-    // Serialize args: config_authority(Option<Pubkey>), threshold(u16), members(Vec<Member>), time_lock(u32), memo(Option<String>)
-    // Member = { key: Pubkey, permissions: u8 }  — Permissions.all() = 7 (Proposer|Voter|Executor)
-    const memberBytes=new Uint8Array(4+members.length*33);
-    memberBytes[0]=members.length&0xff;memberBytes[1]=(members.length>>8)&0xff;
-    memberBytes[2]=(members.length>>16)&0xff;memberBytes[3]=(members.length>>24)&0xff;
-    members.forEach((m,i)=>{
-      const pk=new W3.PublicKey(m);
-      memberBytes.set(pk.toBytes(),4+i*33);
-      memberBytes[4+i*33+32]=7; // Permissions::all (Proposer|Voter|Executor)
+    // Sort members by pubkey bytes (Squads V4 requirement)
+    const sortedMembers=members.map(m=>new W3.PublicKey(m)).sort((a,b)=>{
+      const ab=a.toBytes(),bb=b.toBytes();
+      for(let i=0;i<32;i++){if(ab[i]!==bb[i])return ab[i]-bb[i]}return 0;
     });
 
-    // config_authority = None (0x00), threshold = u16, members, time_lock = 0, memo = None (0x00)
-    const dLen=8+1+2+memberBytes.length+4+1;
+    // Serialize args: MultisigCreateArgsV2 {
+    //   config_authority: Option<Pubkey>,  threshold: u16,
+    //   members: Vec<Member>,  time_lock: u32,
+    //   rent_collector: Option<Pubkey>,  memo: Option<String>
+    // }
+    // Member = { key: Pubkey(32), permissions: Permissions { mask: u8 } } = 33 bytes
+    const memberBytes=new Uint8Array(4+sortedMembers.length*33);
+    memberBytes[0]=sortedMembers.length&0xff;memberBytes[1]=(sortedMembers.length>>8)&0xff;
+    memberBytes[2]=(sortedMembers.length>>16)&0xff;memberBytes[3]=(sortedMembers.length>>24)&0xff;
+    sortedMembers.forEach((pk,i)=>{
+      memberBytes.set(pk.toBytes(),4+i*33);
+      memberBytes[4+i*33+32]=7; // Permissions mask: Initiate(1)|Vote(2)|Execute(4) = 7
+    });
+
+    // config_authority=None, threshold=u16, members, time_lock=0, rent_collector=None, memo=None
+    const dLen=8+1+2+memberBytes.length+4+1+1;
     const data=new Uint8Array(dLen);let p=0;
     data.set(disc,p);p+=8;
     data[p]=0;p+=1; // config_authority = None
-    data[p]=thr&0xff;data[p+1]=(thr>>8)&0xff;p+=2; // threshold u16
+    data[p]=thr&0xff;data[p+1]=(thr>>8)&0xff;p+=2; // threshold u16 LE
     data.set(memberBytes,p);p+=memberBytes.length; // members vec
-    data[p]=0;data[p+1]=0;data[p+2]=0;data[p+3]=0;p+=4; // time_lock = 0
+    data[p]=0;data[p+1]=0;data[p+2]=0;data[p+3]=0;p+=4; // time_lock = 0 (u32 LE)
+    data[p]=0;p+=1; // rent_collector = None
     data[p]=0;p+=1; // memo = None
 
-    // Accounts for multisig_create_v2:
-    // 1. multisig (writable, PDA)
-    // 2. create_key (signer)
-    // 3. creator (signer, payer)
-    // 4. system_program
+    // Accounts for MultisigCreateV2 (order matters!):
+    // 1. program_config (PDA, not writable)
+    // 2. treasury (writable)
+    // 3. multisig (writable, init PDA)
+    // 4. create_key (signer, seed)
+    // 5. creator (signer, payer, mut)
+    // 6. system_program
     const keys=[
+      {pubkey:programConfigPda,isSigner:false,isWritable:false},
+      {pubkey:treasuryPk,isSigner:false,isWritable:true},
       {pubkey:multisigPda,isSigner:false,isWritable:true},
       {pubkey:createKey.publicKey,isSigner:true,isWritable:false},
       {pubkey:buyerPk,isSigner:true,isWritable:true},
