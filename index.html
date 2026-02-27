@@ -724,7 +724,8 @@ async function updateEditionStatus(){
 }
 
 async function purchaseLicense(){
-  if(!cw){toast('Connecting wallet…');if(!await autoConnect()){toast('No wallet found — click Phantom/Solflare button in LICENSE & IDENTITY section to connect');return}}
+  if(!cw){toast('Connecting wallet…');await autoConnect()}
+  if(!cw){toast('Wallet not connected — click Phantom or Solflare button above to connect, then try again');return}
   const dom=(S.v.MELUSINA_DOMAIN||'').trim().toLowerCase();
   if(!dom||!dom.includes('.')){toast('Enter a domain first');return}
   const resMint=S.v.RESELLER_NFT_MINT;
