@@ -128,6 +128,10 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 .buy-btn{padding:8px 20px;background:var(--gn);color:#000;border:none;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:700;transition:.12s}
 .buy-btn:hover{background:#4eca5e}
 .buy-btn:disabled{opacity:.4;cursor:not-allowed}
+.ez-checks{display:flex;flex-direction:column;gap:8px}
+.ez-row{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--s2);border:1px solid var(--bd);border-radius:8px;cursor:pointer;transition:.15s}
+.ez-row:hover{border-color:var(--bd2)}.ez-q{font-size:.82rem;font-weight:600}.ez-d{font-size:.68rem;color:var(--dm)}
+[data-ez="hide"].ez-hidden{display:none!important}
 </style>
 <script src="https://unpkg.com/@solana/web3.js@1.95.5/lib/index.iife.min.js"></script>
 </head>
@@ -144,6 +148,32 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
     <input type="file" id="imp" accept=".env,.txt" style="display:none" onchange="importFile(this)">
     <button onclick="resetAll()">Reset</button> <span class="hq" onclick="showHelp('btn-reset',event)">?</span>
   </div>
+</div>
+
+<!-- INSTALL MODE -->
+<div class="sec" id="sec-mode"><div class="sec-t">Install Mode <span class="hq" onclick="showHelp('sec-mode',event)">?</span></div>
+<div class="card" style="padding:18px 20px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div>
+      <div style="font-size:.88rem;font-weight:700;color:var(--gn)" id="mode-label">🟢 Easy Mode</div>
+      <div style="font-size:.68rem;color:var(--dm)" id="mode-hint">All switches on — only essential steps shown</div>
+    </div>
+  </div>
+  <div class="ez-checks">
+    <div class="ez-row" onclick="toggleEz(0)">
+      <button class="tgl on" id="ez-0" style="pointer-events:none"></button>
+      <div><div class="ez-q">This is a first-time deploy</div><div class="ez-d">I'm not upgrading or migrating an existing instance</div></div>
+    </div>
+    <div class="ez-row" onclick="toggleEz(1)">
+      <button class="tgl on" id="ez-1" style="pointer-events:none"></button>
+      <div><div class="ez-q">I have no other services on this machine</div><div class="ez-d">Clean server — no port conflicts or shared infrastructure</div></div>
+    </div>
+    <div class="ez-row" onclick="toggleEz(2)">
+      <button class="tgl on" id="ez-2" style="pointer-events:none"></button>
+      <div><div class="ez-q">I don't have a license yet</div><div class="ez-d">I need to purchase a Melusina license NFT</div></div>
+    </div>
+  </div>
+</div>
 </div>
 
 <!-- 1. DOMAIN — the most important thing -->
@@ -166,7 +196,7 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 
 <!-- 2. RESELLER & NETWORK -->
-<div class="sec"><div class="sec-t">Reseller &amp; Network <span class="hq" onclick="showHelp('sec-reseller',event)">?</span></div>
+<div class="sec" data-ez="hide"><div class="sec-t">Reseller &amp; Network <span class="hq" onclick="showHelp('sec-reseller',event)">?</span></div>
 <div class="card">
   <div class="chs" style="margin-bottom:10px">
     <div class="ch on" data-r="BLOCKCHAIN_NETWORK" data-v="devnet" onclick="pickR(this);debounceLicenseCheck()">Devnet</div>
@@ -182,7 +212,7 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 
 <!-- 3. WHERE ARE YOU DEPLOYING FROM -->
-<div class="sec"><div class="sec-t">Where are you deploying from? <span class="hq" onclick="showHelp('sec-target',event)">?</span></div>
+<div class="sec" data-ez="hide"><div class="sec-t">Where are you deploying from? <span class="hq" onclick="showHelp('sec-target',event)">?</span></div>
 <div class="pick3" id="target-pick">
   <div class="pk" onclick="pickTarget('local')" data-t="local">
     <div class="dot">✓</div><div class="pk-i">🖥️</div>
@@ -200,7 +230,7 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 
 <!-- PACKAGE SOURCE — store (via reseller) or local bundle -->
-<div class="sec" style="margin-top:16px"><div class="sec-t">Package Source <span class="hq" onclick="showHelp('sec-source',event)">?</span></div>
+<div class="sec" data-ez="hide" style="margin-top:16px"><div class="sec-t">Package Source <span class="hq" onclick="showHelp('sec-source',event)">?</span></div>
 <div class="card">
   <div class="chs">
     <div class="ch" data-r="SOURCE_MODE" data-v="store" onclick="pickR(this);updateStoreStatus()">Download from Store</div>
@@ -230,8 +260,8 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 </div>
 
-<!-- 4. TOPOLOGY -->
-<div class="sec"><div class="sec-t">Network Topology <span class="hq" onclick="showHelp('sec-topology',event)">?</span></div>
+<!-- 4. DEPLOYMENT TOPOLOGY -->
+<div class="sec"><div class="sec-t">Deployment Topology <span class="hq" onclick="showHelp('sec-topology',event)">?</span></div>
 <div class="topo" id="topo">
   <div class="topo-h"><span>Click a node to set IPs &amp; SSH · Drag sidecars between hosts</span></div>
   <div id="topo-vis"></div>
@@ -244,7 +274,7 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 
 <!-- 5. LICENSE & IDENTITY -->
-<div class="sec"><div class="sec-t">License &amp; Identity <span class="hq" onclick="showHelp('sec-license',event)">?</span></div>
+<div class="sec" data-ez="hide"><div class="sec-t">License &amp; Identity <span class="hq" onclick="showHelp('sec-license',event)">?</span></div>
 <div class="card">
   <div class="wbar">
     <button class="wb" data-w="phantom" onclick="connectW('phantom')">👻 Phantom</button>
@@ -282,7 +312,7 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 
 <!-- 6. OTP -->
-<div class="sec"><div class="sec-t">OTP via Telegram <span class="hq" onclick="showHelp('sec-otp',event)">?</span></div>
+<div class="sec" data-ez="hide"><div class="sec-t">OTP via Telegram <span class="hq" onclick="showHelp('sec-otp',event)">?</span></div>
 <div class="card">
   <div class="tr"><div><div class="tr-l">Enable phone verification at signup <span class="hq" onclick="showHelp('OTP_ENABLED',event)">?</span></div><div class="tr-d">Users verify via Telegram Gateway before creating an account</div></div>
     <button class="tgl" id="tgl-otp" data-k="OTP_ENABLED" onclick="toggleK(this)"></button></div>
@@ -295,7 +325,7 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 
 <!-- 7. MERMAIL (conditional on MerMail service) -->
-<div class="sec cond" data-show="svc:MERMAIL">
+<div class="sec cond" data-ez="hide" data-show="svc:MERMAIL">
 <div class="sec-t">MerMail <span class="hq" onclick="showHelp('sec-mermail',event)">?</span></div>
 <div class="card">
   <div class="chs">
@@ -320,7 +350,7 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 
 <!-- 8. MONITORING -->
-<div class="sec"><div class="sec-t">Monitoring <span class="hq" onclick="showHelp('sec-monitoring',event)">?</span></div>
+<div class="sec" data-ez="hide"><div class="sec-t">Monitoring <span class="hq" onclick="showHelp('sec-monitoring',event)">?</span></div>
 <div class="card">
   <div class="row"><div class="f"><label>Watchdog Bot Token <span class="hq" onclick="showHelp('WATCHDOG_TG_TOKEN',event)">?</span></label><input data-k="WATCHDOG_TG_TOKEN" placeholder="Telegram bot token for Wolfdog alerts"></div><div class="f"><label>Chat ID <span class="hq" onclick="showHelp('WATCHDOG_TG_CHAT_ID',event)">?</span></label><input data-k="WATCHDOG_TG_CHAT_ID" placeholder="Telegram chat/group ID"></div></div>
   <div class="f"><label>Admin Telegram IDs <span class="hq" onclick="showHelp('WATCHDOG_TG_ADMINS',event)">?</span></label><input data-k="WATCHDOG_TG_ADMINS" placeholder="Comma-separated Telegram user IDs">
@@ -329,7 +359,7 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 
 <!-- 9. ADVANCED -->
-<div class="sec"><div class="sec-t">Advanced <span class="hq" onclick="showHelp('sec-advanced',event)">?</span></div>
+<div class="sec" data-ez="hide"><div class="sec-t">Advanced <span class="hq" onclick="showHelp('sec-advanced',event)">?</span></div>
 <div class="card">
   <div class="tr"><div class="tr-l">Auto-boot on restart <span class="hq" onclick="showHelp('MELUSINA_AUTO_BOOT',event)">?</span></div><button class="tgl on" data-k="MELUSINA_AUTO_BOOT" onclick="toggleK(this)"></button></div>
   <div class="tr"><div class="tr-l">Auto-start sidecars <span class="hq" onclick="showHelp('MELUSINA_SIDECAR_AUTOSTART',event)">?</span></div><button class="tgl on" data-k="MELUSINA_SIDECAR_AUTOSTART" onclick="toggleK(this)"></button></div>
@@ -481,6 +511,13 @@ const HELP={
 
   // -- Buy box --
   'buy-license':'<p>Purchase a Melusina license NFT on-chain. Costs 0.1 SOL on devnet. Your connected wallet pays, and a license edition NFT is minted to you automatically.</p><p>The license is tied to the domain you entered above.</p>',
+
+  // -- Section: Install Mode --
+  'sec-mode':'<p>Easy Mode walks you through the minimum steps: enter a domain, buy a license, pick sidecars, and review the deployment topology.</p><p>If any switch is <b>off</b>, Advanced Mode unlocks all configuration sections for experienced administrators.</p>',
+
+  // -- Topology: Gateway & Server --
+  'topo-gateway':'<p><b>Public Gateway</b> — The edge server that faces the internet. It runs:</p><ul style="margin:6px 0 6px 16px;font-size:.74rem"><li><b>BIND9</b> — authoritative DNS for your zone</li><li><b>nginx</b> — SNI-based TLS passthrough proxy</li><li><b>WireGuard</b> — encrypted VPN tunnel to the Melusina VM</li><li><b>certbot</b> — automatic Let\'s Encrypt certificates</li></ul><p>Click the gateway node in the topology to set its public IP address and SSH credentials.</p>',
+  'topo-server':'<p><b>Melusina Server</b> — The application host running inside an Incus VM on the gateway. It runs:</p><ul style="margin:6px 0 6px 16px;font-size:.74rem"><li><b>Sandstorm</b> — the grain-based app platform</li><li><b>Solana auth</b> — on-chain license verification</li><li><b>Assigned sidecars</b> — MerMail, AiLagoon, Vintage, etc.</li></ul><p>Click the server node in the topology to configure the VM name. The VM is created automatically by the deploy script — no separate SSH access needed.</p>',
 };
 
 function showHelp(key,e){
@@ -495,6 +532,34 @@ function showHelp(key,e){
   // On mobile scroll panel into view
   if(window.innerWidth<=900)document.getElementById('help-panel').scrollIntoView({behavior:'smooth'});
 }
+
+// ═══════════════ EASY / ADVANCED MODE ═══════════════
+let ezState=[true,true,true];
+function toggleEz(i){
+  ezState[i]=!ezState[i];
+  document.getElementById('ez-'+i).classList.toggle('on',ezState[i]);
+  updateMode();
+}
+function updateMode(){
+  const easy=ezState.every(Boolean);
+  const label=document.getElementById('mode-label');
+  const hint=document.getElementById('mode-hint');
+  if(label){
+    if(easy){
+      label.innerHTML='\ud83d\udfe2 Easy Mode';label.style.color='var(--gn)';
+      hint.textContent='All switches on \u2014 only essential steps shown';
+      // Default to local deploy in easy mode
+      if(!S.v.DEPLOY_TARGET){S.v.DEPLOY_TARGET='local';pickTarget('local');save()}
+    }else{
+      label.innerHTML='\ud83d\udd27 Advanced Mode';label.style.color='var(--or)';
+      hint.textContent='One or more switches off \u2014 all configuration sections visible';
+    }
+  }
+  document.querySelectorAll('[data-ez="hide"]').forEach(el=>{
+    el.classList.toggle('ez-hidden',easy);
+  });
+}
+
 const K='mel_v8';
 const SC=[
   {id:'WATCHDOG',name:'Wolfdog',icon:'🐺',req:1},
@@ -580,9 +645,9 @@ function topo(){
   const gwIp=S.v.MELUSINA_AWS_IP||'';
   const srSc=scOn('host');
   let h='<div class="t-row">';
-  h+=`<div class="t-n gw" onclick="xpand('gw')"><div class="t-i">🌐</div><div class="t-l">Public Gateway</div><div class="t-m">${esc(gwIp||'Click to set IP')}</div></div>`;
+  h+=`<div class="t-n gw" onclick="xpand('gw')"><div class="t-i">🌐</div><div class="t-l">Public Gateway <span class="hq" onclick="event.stopPropagation();showHelp('topo-gateway',event)">?</span></div><div class="t-m">${esc(gwIp||'Click to set IP')}</div></div>`;
   h+=`<div class="t-link"><span class="t-link-tag">WireGuard</span></div>`;
-  h+=`<div class="t-n sv" onclick="xpand('host')"><div class="t-i">🏗️</div><div class="t-l">Melusina Server</div><div class="t-m">${srSc.length} service${srSc.length!==1?'s':''}</div>`;
+  h+=`<div class="t-n sv" onclick="xpand('host')"><div class="t-i">🏗️</div><div class="t-l">Melusina Server <span class="hq" onclick="event.stopPropagation();showHelp('topo-server',event)">?</span></div><div class="t-m">${srSc.length} service${srSc.length!==1?'s':''}</div>`;
   h+=pills('host',srSc);
   h+=`</div></div>`;
   if(S.hosts.length){
@@ -1328,7 +1393,7 @@ document.body.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTrans
 
 // ═══════════════ BOOT ═══════════════
 function boot(){
-  bindAll();topo();deriveKh();deriveDns();reflow();
+  bindAll();topo();deriveKh();deriveDns();reflow();updateMode();
   if(S.v.DEPLOY_TARGET)pickTarget(S.v.DEPLOY_TARGET);
   document.querySelectorAll('.ch[data-r]').forEach(el=>el.classList.toggle('on',S.v[el.dataset.r]===el.dataset.v));
   document.querySelectorAll('.tgl[data-k]').forEach(b=>b.classList.toggle('on',S.v[b.dataset.k]==='true'));
