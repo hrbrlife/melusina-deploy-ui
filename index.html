@@ -247,16 +247,18 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
     <div class="f"><label>Unseal Threshold</label><input type="number" data-k="UNSEAL_THRESHOLD" placeholder="3" min="1" oninput="deriveKh()"></div>
     <div id="kh-info" style="display:flex;flex-direction:column;justify-content:end;padding-bottom:10px"></div>
   </div>
-  <details><summary>Squads Multisig, Program IDs &amp; RPC</summary>
-    <div style="margin-bottom:8px">
-      <button class="brb" onclick="createSquadsMultisig()" style="padding:6px 14px;font-size:.72rem;font-weight:600">🔐 Auto-Create Squads Multisig</button>
-      <div style="font-size:.62rem;color:var(--dm);margin-top:4px">Creates a Squads V4 multisig from your keyholders &amp; threshold above. Wallet must be connected.</div>
-      <div id="squads-status" style="font-size:.7rem;margin-top:4px"></div>
+  <div style="margin-bottom:8px">
+    <button class="brb" onclick="createSquadsMultisig()" style="padding:6px 14px;font-size:.72rem;font-weight:600">🔐 Auto-Create Squads Multisig</button>
+    <div style="font-size:.62rem;color:var(--dm);margin-top:4px">Creates a Squads V4 multisig from your keyholders &amp; threshold above. Wallet must be connected.</div>
+    <div id="squads-status" style="font-size:.7rem;margin-top:4px"></div>
+  </div>
+  <div class="row"><div class="f"><label>Multisig</label><input class="mono" data-k="SQUADS_MULTISIG"></div><div class="f"><label>Vault</label><input class="mono" data-k="SQUADS_VAULT"></div></div>
+  <details style="margin-top:8px"><summary style="font-size:.68rem;color:var(--dm);cursor:pointer">⚙ Advanced / Admin (usually auto-filled)</summary>
+    <div style="margin-top:6px">
+      <div class="f"><label>Master NFT</label><input class="mono" data-k="MASTER_NFT_MINT" placeholder="auto-filled"></div>
+      <div class="row"><div class="f"><label>Program ID</label><input data-k="MELUSINA_PROGRAM_ID" placeholder="auto-filled"></div><div class="f"><label>Governance ID</label><input data-k="MELUSINA_GOVERNANCE_ID" placeholder="optional"></div></div>
+      <div class="row"><div class="f"><label>Helius API Key</label><input data-k="HELIUS_API_KEY" placeholder="optional – for mainnet RPC"></div><div class="f"><label>Helius RPC</label><input data-k="HELIUS_RPC" placeholder="optional – defaults to public RPC"></div></div>
     </div>
-    <div class="row"><div class="f"><label>Multisig</label><input class="mono" data-k="SQUADS_MULTISIG"></div><div class="f"><label>Vault</label><input class="mono" data-k="SQUADS_VAULT"></div></div>
-    <div class="f"><label>Master NFT</label><input class="mono" data-k="MASTER_NFT_MINT"></div>
-    <div class="row"><div class="f"><label>Program ID</label><input data-k="MELUSINA_PROGRAM_ID"></div><div class="f"><label>Governance ID</label><input data-k="MELUSINA_GOVERNANCE_ID"></div></div>
-    <div class="row"><div class="f"><label>Helius API Key</label><input data-k="HELIUS_API_KEY"></div><div class="f"><label>Helius RPC</label><input data-k="HELIUS_RPC"></div></div>
   </details>
 </div>
 </div>
@@ -354,7 +356,8 @@ function fresh(){
     MELUSINA_ZONE_SOVEREIGNTY:'subdomain',EMAIL_PROVIDER:'ses',
     OTP_ENABLED:'false',OTP_ENFORCED:'false',MELUSINA_AUTO_BOOT:'true',
     MELUSINA_SIDECAR_AUTOSTART:'true',MANAGE_ZONE_DNS:'false',
-    MELUSINA_VM_NAME:'melusina',RESELLER_NFT_MINT:'',RESELLER_NAME:''},
+    MELUSINA_VM_NAME:'melusina',RESELLER_NFT_MINT:'',RESELLER_NAME:'',
+    MELUSINA_PROGRAM_ID:PROG_ID,MASTER_NFT_MINT:KNOWN_MASTER},
     dns:[],hosts:[],svc:{},sh:{}};
   SC.forEach(s=>{S.svc[s.id]=!!s.req;if(!s.vm)S.sh[s.id]='host'});
 }
@@ -363,6 +366,9 @@ function load(){
   try{const d=sessionStorage.getItem(K);if(d)S=JSON.parse(d);else{fresh();return}}catch(e){fresh();return}
   SC.forEach(s=>{if(s.req)S.svc[s.id]=true;if(!S.sh)S.sh={};if(!s.vm&&!S.sh[s.id])S.sh[s.id]='host'});
   if(!S.hosts)S.hosts=[];if(!S.dns)S.dns=[];
+  // Auto-populate known on-chain constants so buyers never have to fill them
+  if(!S.v.MELUSINA_PROGRAM_ID)S.v.MELUSINA_PROGRAM_ID=PROG_ID;
+  if(!S.v.MASTER_NFT_MINT)S.v.MASTER_NFT_MINT=KNOWN_MASTER;
 }
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 
