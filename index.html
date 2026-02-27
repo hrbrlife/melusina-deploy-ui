@@ -539,7 +539,9 @@ function detectW(){const m={phantom:!!getWalletProvider('phantom'),solflare:!!ge
 async function connectW(n){
   const p=getWalletProvider(n);
   if(!p){toast(n+' wallet not detected — is the browser extension installed and enabled on this site? Try refreshing.');return}
-  try{const r=await p.connect(),pub=r.publicKey?.toBase58?.()||r.publicKey?.toString()||'';
+  try{const r=await p.connect();
+    const pk=r?.publicKey||p.publicKey;
+    const pub=pk?.toBase58?.()||pk?.toString?.()||'';
     if(!pub)throw new Error('No key');cw={n,pub,p};
     document.getElementById('w-info').textContent=pub.slice(0,4)+'…'+pub.slice(-4);
     document.getElementById('w-dc').style.display='';
