@@ -888,7 +888,15 @@ const SQUADS_PROG_ID='SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf';
 
 async function createSquadsMultisig(){
   const el=document.getElementById('squads-status');
-  if(!cw){toast('Connect wallet first');if(el)el.innerHTML='<span style="color:var(--or)">⚠ Connect wallet first</span>';return}
+  if(!cw){
+    if(el)el.innerHTML='<span style="color:var(--dm)">⏳ Connecting wallet…</span>';
+    await autoConnect();
+    if(!cw){
+      // Show inline wallet buttons
+      if(el)el.innerHTML=`<div style="margin:6px 0"><span style="color:var(--or);font-size:.72rem">Connect wallet first:</span><div style="display:flex;gap:6px;margin-top:4px"><button class="wb" onclick="connectW('phantom').then(()=>createSquadsMultisig())">👻 Phantom</button><button class="wb" onclick="connectW('solflare').then(()=>createSquadsMultisig())">🔆 Solflare</button></div></div>`;
+      return;
+    }
+  }
 
   const kh=(S.v.SOLANA_KEYHOLDERS||'').replace(/\n/g,',').split(',').map(w=>w.trim()).filter(Boolean);
   const thr=Math.max(parseInt(S.v.UNSEAL_THRESHOLD||'2')||2,1);
