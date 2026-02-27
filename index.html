@@ -9,7 +9,19 @@
 --rd:#f85149;--or:#d29922;--pu:#bc8cff;--tl:#39d2c0;--r:10px}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);line-height:1.5}
-.w{max-width:880px;margin:0 auto;padding:20px 20px 80px}
+.w{display:flex;gap:20px;max-width:1200px;margin:0 auto;padding:20px 20px 80px}
+.w-main{flex:1;min-width:0;max-width:880px}
+.w-help{width:280px;flex-shrink:0}
+.help-panel{position:sticky;top:20px;background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:16px;max-height:calc(100vh - 40px);overflow-y:auto}
+.help-panel .hp-title{font-size:.7rem;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.help-panel .hp-field{font-size:.82rem;font-weight:600;color:var(--tx);margin-bottom:6px}
+.help-panel .hp-body{font-size:.76rem;color:var(--dm);line-height:1.55}
+.help-panel .hp-body p{margin:6px 0}
+.help-panel .hp-empty{font-size:.74rem;color:var(--bd2);font-style:italic}
+.hq{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--s2);border:1px solid var(--bd);color:var(--dm);font-size:.58rem;font-weight:700;cursor:pointer;margin-left:5px;transition:.15s;vertical-align:middle;line-height:1;user-select:none;flex-shrink:0}
+.hq:hover{border-color:var(--ac);color:var(--ac);background:rgba(88,166,255,.08)}
+.hq.active{border-color:var(--ac);color:var(--ac);background:rgba(88,166,255,.12)}
+@media(max-width:900px){.w{flex-direction:column}.w-help{width:100%;position:fixed;bottom:0;left:0;right:0;z-index:100;max-height:40vh}.help-panel{position:static;border-radius:var(--r) var(--r) 0 0;max-height:40vh}}
 .hero{text-align:center;padding:28px 0 20px}
 .hero h1{font-size:1.7rem;font-weight:700;background:linear-gradient(135deg,var(--ac),var(--pu));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .hero p{color:var(--dm);font-size:.85rem;margin-top:4px}
@@ -121,31 +133,32 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </head>
 <body>
 <div class="w">
+<div class="w-main">
 
 <!-- HERO -->
 <div class="hero">
   <h1>Melusina Deploy Configurator</h1>
   <p>Build your deployment.env — the deploy script handles everything else.</p>
   <div class="hero-bar">
-    <button onclick="document.getElementById('imp').click()">Import .env</button>
+    <button onclick="document.getElementById('imp').click()">Import .env</button> <span class="hq" onclick="showHelp('btn-import',event)">?</span>
     <input type="file" id="imp" accept=".env,.txt" style="display:none" onchange="importFile(this)">
-    <button onclick="resetAll()">Reset</button>
+    <button onclick="resetAll()">Reset</button> <span class="hq" onclick="showHelp('btn-reset',event)">?</span>
   </div>
 </div>
 
 <!-- 1. DOMAIN — the most important thing -->
-<div class="sec"><div class="sec-t">Deployment Domain</div>
+<div class="sec"><div class="sec-t">Deployment Domain <span class="hq" onclick="showHelp('sec-domain',event)">?</span></div>
 <div class="card">
-  <div class="f"><label>Domain</label><input data-k="MELUSINA_DOMAIN" placeholder="app.melusina-os.org" oninput="deriveDns();debounceLicenseCheck()"></div>
+  <div class="f"><label>Domain <span class="hq" onclick="showHelp('MELUSINA_DOMAIN',event)">?</span></label><input data-k="MELUSINA_DOMAIN" placeholder="app.melusina-os.org" oninput="deriveDns();debounceLicenseCheck()"></div>
   <div id="dns-derived"></div>
   <div id="license-check" style="margin-top:8px"></div>
-  <div style="font-size:.72rem;color:var(--dm);margin-top:10px">Do you own this domain?</div>
+  <div style="font-size:.72rem;color:var(--dm);margin-top:10px">Do you own this domain? <span class="hq" onclick="showHelp('zone-sovereignty',event)">?</span></div>
   <div class="chs" style="margin-top:4px">
     <div class="ch on" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="subdomain" onclick="pickR(this)" title="e.g. app.yourreseller.com — reseller controls the parent domain">No, it's a subdomain</div>
     <div class="ch" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="full" onclick="pickR(this)" title="e.g. mycompany.com — you control the entire DNS zone">Yes, I own it</div>
   </div>
   <div id="zone-hint" style="font-size:.62rem;color:var(--dm);margin-top:4px">Most buyers use a subdomain provided by their reseller. Choose "Yes, I own it" only if you registered the domain yourself.</div>
-  <details><summary>Extra DNS records</summary>
+  <details><summary>Extra DNS records <span class="hq" onclick="showHelp('EXTRA_DNS',event)">?</span></summary>
     <div class="f"><label>One record per line</label><textarea data-k="EXTRA_DNS" placeholder="mail  A  1.2.3.4&#10;_dmarc  TXT  v=DMARC1; p=none&#10;mx  MX  10 mail.example.com" style="min-height:80px"></textarea>
       <div class="h">Format: name  type  value (space or tab separated)</div></div>
   </details>
@@ -153,11 +166,12 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 
 <!-- 2. RESELLER & NETWORK -->
-<div class="sec"><div class="sec-t">Reseller &amp; Network</div>
+<div class="sec"><div class="sec-t">Reseller &amp; Network <span class="hq" onclick="showHelp('sec-reseller',event)">?</span></div>
 <div class="card">
   <div class="chs" style="margin-bottom:10px">
     <div class="ch on" data-r="BLOCKCHAIN_NETWORK" data-v="devnet" onclick="pickR(this);debounceLicenseCheck()">Devnet</div>
     <div class="ch" data-r="BLOCKCHAIN_NETWORK" data-v="mainnet-beta" onclick="pickR(this);debounceLicenseCheck()">Mainnet</div>
+    <span class="hq" onclick="showHelp('BLOCKCHAIN_NETWORK',event)">?</span>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
     <span style="font-size:.75rem;color:var(--dm)">Select your reseller (by NFT common name)</span>
@@ -168,35 +182,36 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 
 <!-- 3. WHERE ARE YOU DEPLOYING FROM -->
-<div class="sec"><div class="sec-t">Where are you deploying from?</div>
+<div class="sec"><div class="sec-t">Where are you deploying from? <span class="hq" onclick="showHelp('sec-target',event)">?</span></div>
 <div class="pick3" id="target-pick">
   <div class="pk" onclick="pickTarget('local')" data-t="local">
     <div class="dot">✓</div><div class="pk-i">🖥️</div>
-    <div class="pk-l">This Machine</div>
+    <div class="pk-l">This Machine <span class="hq" onclick="event.stopPropagation();showHelp('target-local',event)">?</span></div>
     <div class="pk-d">Server runs right here.<br>No SSH needed.</div></div>
   <div class="pk" onclick="pickTarget('remote_from')" data-t="remote_from">
     <div class="dot">✓</div><div class="pk-i">🚀</div>
-    <div class="pk-l">Remote — Deploy From Here</div>
+    <div class="pk-l">Remote — Deploy From Here <span class="hq" onclick="event.stopPropagation();showHelp('target-remote_from',event)">?</span></div>
     <div class="pk-d">Your workstation pushes<br>to a remote server via SSH.</div></div>
   <div class="pk" onclick="pickTarget('remote_on')" data-t="remote_on">
     <div class="dot">✓</div><div class="pk-i">📦</div>
-    <div class="pk-l">Carry &amp; Install</div>
+    <div class="pk-l">Carry &amp; Install <span class="hq" onclick="event.stopPropagation();showHelp('target-remote_on',event)">?</span></div>
     <div class="pk-d">Take the .env and package to<br>the target machine, run there.</div></div>
 </div>
 </div>
 
 <!-- PACKAGE SOURCE — store (via reseller) or local bundle -->
-<div class="sec" style="margin-top:16px"><div class="sec-t">Package Source</div>
+<div class="sec" style="margin-top:16px"><div class="sec-t">Package Source <span class="hq" onclick="showHelp('sec-source',event)">?</span></div>
 <div class="card">
   <div class="chs">
     <div class="ch" data-r="SOURCE_MODE" data-v="store" onclick="pickR(this);updateStoreStatus()">Download from Store</div>
     <div class="ch on" data-r="SOURCE_MODE" data-v="local" onclick="pickR(this)">Local Bundle</div>
+    <span class="hq" onclick="showHelp('source-store',event)">?</span>
   </div>
   <div class="cond" data-show="v:SOURCE_MODE:store">
     <div id="store-status" style="padding:8px 12px;background:var(--s2);border-radius:8px;font-size:.75rem"></div>
   </div>
   <div class="cond show" data-show="v:SOURCE_MODE:local">
-    <div class="br"><div class="f"><label>Bundle path (.tar.xz)</label><input data-k="MELUSINA_SANDSTORM_BUNDLE" placeholder="../sandstorm/sandstorm-0-fast.tar.xz"></div>
+    <div class="br"><div class="f"><label>Bundle path (.tar.xz) <span class="hq" onclick="showHelp('MELUSINA_SANDSTORM_BUNDLE',event)">?</span></label><input data-k="MELUSINA_SANDSTORM_BUNDLE" placeholder="../sandstorm/sandstorm-0-fast.tar.xz"></div>
       <button class="brb" onclick="browse('MELUSINA_SANDSTORM_BUNDLE','.tar.xz,.tar')">Browse</button></div>
     <div class="h" style="font-size:.68rem;color:var(--dm);margin-top:4px">If empty the deploy script builds from the sandstorm/ directory.</div>
   </div>
@@ -204,145 +219,282 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 
 <!-- 3. SERVICES -->
-<div class="sec"><div class="sec-t">Services</div>
+<div class="sec"><div class="sec-t">Services <span class="hq" onclick="showHelp('sec-services',event)">?</span></div>
 <div class="sg" id="svc-grid">
-  <div class="sv lock on" data-s="WATCHDOG"><div class="sv-i">🐺</div><div class="sv-info"><div class="sv-n">Wolfdog</div><div class="sv-d">Monitoring &amp; health</div></div><span class="sv-tag r">Required</span><button class="sw on lock"></button></div>
-  <div class="sv lock on" data-s="BACKUP"><div class="sv-i">💾</div><div class="sv-info"><div class="sv-n">Backup</div><div class="sv-d">Encrypted daily backups</div></div><span class="sv-tag r">Required</span><button class="sw on lock"></button></div>
-  <div class="sv" data-s="MERMAIL" onclick="toggleSvc('MERMAIL')"><div class="sv-i">📧</div><div class="sv-info"><div class="sv-n">MerMail</div><div class="sv-d">Outbound email</div></div><span class="sv-tag o">Optional</span><button class="sw" id="sw-MERMAIL"></button></div>
-  <div class="sv" data-s="AILAGOON" onclick="toggleSvc('AILAGOON')"><div class="sv-i">🤖</div><div class="sv-info"><div class="sv-n">AiLagoon</div><div class="sv-d">Local AI proxy</div></div><span class="sv-tag o">Optional</span><button class="sw" id="sw-AILAGOON"></button></div>
-  <div class="sv" data-s="VINTAGE" onclick="toggleSvc('VINTAGE')"><div class="sv-i">🖥️</div><div class="sv-info"><div class="sv-n">Vintage</div><div class="sv-d">Virtual desktop</div></div><span class="sv-tag o">Optional</span><button class="sw" id="sw-VINTAGE"></button></div>
-  <div class="sv" data-s="SCREENING" onclick="toggleSvc('SCREENING')"><div class="sv-i">🔍</div><div class="sv-info"><div class="sv-n">TeleScreen</div><div class="sv-d">Sanctions &amp; reputation</div></div><span class="sv-tag o">Optional</span><button class="sw" id="sw-SCREENING"></button></div>
+  <div class="sv lock on" data-s="WATCHDOG"><div class="sv-i">🐺</div><div class="sv-info"><div class="sv-n">Wolfdog <span class="hq" onclick="event.stopPropagation();showHelp('svc-WATCHDOG',event)">?</span></div><div class="sv-d">Monitoring &amp; health</div></div><span class="sv-tag r">Required</span><button class="sw on lock"></button></div>
+  <div class="sv lock on" data-s="BACKUP"><div class="sv-i">💾</div><div class="sv-info"><div class="sv-n">Backup <span class="hq" onclick="event.stopPropagation();showHelp('svc-BACKUP',event)">?</span></div><div class="sv-d">Encrypted daily backups</div></div><span class="sv-tag r">Required</span><button class="sw on lock"></button></div>
+  <div class="sv" data-s="MERMAIL" onclick="toggleSvc('MERMAIL')"><div class="sv-i">📧</div><div class="sv-info"><div class="sv-n">MerMail <span class="hq" onclick="event.stopPropagation();showHelp('svc-MERMAIL',event)">?</span></div><div class="sv-d">Outbound email</div></div><span class="sv-tag o">Optional</span><button class="sw" id="sw-MERMAIL"></button></div>
+  <div class="sv" data-s="AILAGOON" onclick="toggleSvc('AILAGOON')"><div class="sv-i">🤖</div><div class="sv-info"><div class="sv-n">AiLagoon <span class="hq" onclick="event.stopPropagation();showHelp('svc-AILAGOON',event)">?</span></div><div class="sv-d">Local AI proxy</div></div><span class="sv-tag o">Optional</span><button class="sw" id="sw-AILAGOON"></button></div>
+  <div class="sv" data-s="VINTAGE" onclick="toggleSvc('VINTAGE')"><div class="sv-i">🖥️</div><div class="sv-info"><div class="sv-n">Vintage <span class="hq" onclick="event.stopPropagation();showHelp('svc-VINTAGE',event)">?</span></div><div class="sv-d">Virtual desktop</div></div><span class="sv-tag o">Optional</span><button class="sw" id="sw-VINTAGE"></button></div>
+  <div class="sv" data-s="SCREENING" onclick="toggleSvc('SCREENING')"><div class="sv-i">🔍</div><div class="sv-info"><div class="sv-n">TeleScreen <span class="hq" onclick="event.stopPropagation();showHelp('svc-SCREENING',event)">?</span></div><div class="sv-d">Sanctions &amp; reputation</div></div><span class="sv-tag o">Optional</span><button class="sw" id="sw-SCREENING"></button></div>
 </div>
 </div>
 
-<!-- 4. TOPOLOGY — click nodes to set IPs, drag sidecars between hosts -->
-<div class="sec"><div class="sec-t">Network Topology</div>
+<!-- 4. TOPOLOGY -->
+<div class="sec"><div class="sec-t">Network Topology <span class="hq" onclick="showHelp('sec-topology',event)">?</span></div>
 <div class="topo" id="topo">
   <div class="topo-h"><span>Click a node to set IPs &amp; SSH · Drag sidecars between hosts</span></div>
   <div id="topo-vis"></div>
   <div class="t-add">
-    <button onclick="addHost('local')">＋ Sidecar Host (Local)</button>
-    <button onclick="addHost('remote')">＋ Sidecar Host (Remote)</button>
+    <button onclick="addHost('local')">＋ Sidecar Host (Local) <span class="hq" onclick="event.stopPropagation();showHelp('topo-add-local',event)">?</span></button>
+    <button onclick="addHost('remote')">＋ Sidecar Host (Remote) <span class="hq" onclick="event.stopPropagation();showHelp('topo-add-remote',event)">?</span></button>
   </div>
 </div>
 <div id="topo-cfg"></div>
 </div>
 
-<!-- 5. LICENSE & IDENTITY (merged, simplified) -->
-<div class="sec"><div class="sec-t">License &amp; Identity</div>
+<!-- 5. LICENSE & IDENTITY -->
+<div class="sec"><div class="sec-t">License &amp; Identity <span class="hq" onclick="showHelp('sec-license',event)">?</span></div>
 <div class="card">
   <div class="wbar">
     <button class="wb" data-w="phantom" onclick="connectW('phantom')">👻 Phantom</button>
     <button class="wb" data-w="solflare" onclick="connectW('solflare')">🔆 Solflare</button>
     <button class="wb" data-w="backpack" onclick="connectW('backpack')">🎒 Backpack</button>
+    <span class="hq" onclick="showHelp('wallet-connect',event)">?</span>
     <span id="w-info" style="margin-left:auto;font-size:.74rem;color:var(--ac);font-family:monospace"></span>
     <button class="btn btn-s" id="w-dc" style="display:none;padding:4px 10px;font-size:.68rem" onclick="disconnectW()">Disconnect</button>
   </div>
   <div id="w-det" style="font-size:.65rem;color:var(--dm);padding:2px 0">
   </div>
   <div class="row">
-    <div class="f"><label>Operator Wallet</label><input class="mono" data-k="OPERATOR_WALLET" placeholder="Solana pubkey"></div>
-    <div class="f"><label>License NFT</label><input class="mono" data-k="MELUSINA_LICENSE_NFT" placeholder="NFT mint address"></div>
+    <div class="f"><label>Operator Wallet <span class="hq" onclick="showHelp('OPERATOR_WALLET',event)">?</span></label><input class="mono" data-k="OPERATOR_WALLET" placeholder="Solana pubkey"></div>
+    <div class="f"><label>License NFT <span class="hq" onclick="showHelp('MELUSINA_LICENSE_NFT',event)">?</span></label><input class="mono" data-k="MELUSINA_LICENSE_NFT" placeholder="NFT mint address"></div>
   </div>
-  <div class="f"><label>Keyholders</label><textarea data-k="SOLANA_KEYHOLDERS" placeholder="One per line or comma-separated" oninput="deriveKh()"></textarea></div>
+  <div class="f"><label>Keyholders <span class="hq" onclick="showHelp('SOLANA_KEYHOLDERS',event)">?</span></label><textarea data-k="SOLANA_KEYHOLDERS" placeholder="One per line or comma-separated" oninput="deriveKh()"></textarea></div>
   <div class="row">
-    <div class="f"><label>Unseal Threshold</label><input type="number" data-k="UNSEAL_THRESHOLD" placeholder="3" min="1" oninput="deriveKh()"></div>
+    <div class="f"><label>Unseal Threshold <span class="hq" onclick="showHelp('UNSEAL_THRESHOLD',event)">?</span></label><input type="number" data-k="UNSEAL_THRESHOLD" placeholder="3" min="1" oninput="deriveKh()"></div>
     <div id="kh-info" style="display:flex;flex-direction:column;justify-content:end;padding-bottom:10px"></div>
   </div>
   <div style="margin-bottom:8px">
-    <button class="brb" onclick="createSquadsMultisig()" style="padding:6px 14px;font-size:.72rem;font-weight:600">🔐 Auto-Create Squads Multisig</button>
+    <button class="brb" onclick="createSquadsMultisig()" style="padding:6px 14px;font-size:.72rem;font-weight:600">🔐 Auto-Create Squads Multisig</button> <span class="hq" onclick="showHelp('btn-squads',event)">?</span>
     <div style="font-size:.62rem;color:var(--dm);margin-top:4px">Creates a Squads V4 multisig from your keyholders &amp; threshold above. Wallet must be connected.</div>
     <div id="squads-status" style="font-size:.7rem;margin-top:4px"></div>
   </div>
-  <div class="row"><div class="f"><label>Multisig</label><input class="mono" data-k="SQUADS_MULTISIG"></div><div class="f"><label>Vault</label><input class="mono" data-k="SQUADS_VAULT"></div></div>
-  <details style="margin-top:8px"><summary style="font-size:.68rem;color:var(--dm);cursor:pointer">⚙ Advanced / Admin (usually auto-filled)</summary>
+  <div class="row"><div class="f"><label>Multisig <span class="hq" onclick="showHelp('SQUADS_MULTISIG',event)">?</span></label><input class="mono" data-k="SQUADS_MULTISIG"></div><div class="f"><label>Vault <span class="hq" onclick="showHelp('SQUADS_VAULT',event)">?</span></label><input class="mono" data-k="SQUADS_VAULT"></div></div>
+  <details style="margin-top:8px"><summary style="font-size:.68rem;color:var(--dm);cursor:pointer">⚙ Advanced / Admin <span class="hq" onclick="event.stopPropagation();showHelp('sec-advanced-admin',event)">?</span></summary>
     <div style="margin-top:6px">
-      <div class="f"><label>Master NFT</label><input class="mono" data-k="MASTER_NFT_MINT" placeholder="auto-filled"></div>
-      <div class="row"><div class="f"><label>Program ID</label><input data-k="MELUSINA_PROGRAM_ID" placeholder="auto-filled"></div><div class="f"><label>Governance ID</label><input data-k="MELUSINA_GOVERNANCE_ID" placeholder="optional"></div></div>
-      <div class="row"><div class="f"><label>Helius API Key</label><input data-k="HELIUS_API_KEY" placeholder="optional – for mainnet RPC"></div><div class="f"><label>Helius RPC</label><input data-k="HELIUS_RPC" placeholder="optional – defaults to public RPC"></div></div>
+      <div class="f"><label>Master NFT <span class="hq" onclick="showHelp('MASTER_NFT_MINT',event)">?</span></label><input class="mono" data-k="MASTER_NFT_MINT" placeholder="auto-filled"></div>
+      <div class="row"><div class="f"><label>Program ID <span class="hq" onclick="showHelp('MELUSINA_PROGRAM_ID',event)">?</span></label><input data-k="MELUSINA_PROGRAM_ID" placeholder="auto-filled"></div><div class="f"><label>Governance ID <span class="hq" onclick="showHelp('MELUSINA_GOVERNANCE_ID',event)">?</span></label><input data-k="MELUSINA_GOVERNANCE_ID" placeholder="optional"></div></div>
+      <div class="row"><div class="f"><label>Helius API Key <span class="hq" onclick="showHelp('HELIUS_API_KEY',event)">?</span></label><input data-k="HELIUS_API_KEY" placeholder="optional – for mainnet RPC"></div><div class="f"><label>Helius RPC <span class="hq" onclick="showHelp('HELIUS_RPC',event)">?</span></label><input data-k="HELIUS_RPC" placeholder="optional – defaults to public RPC"></div></div>
     </div>
   </details>
 </div>
 </div>
 
 <!-- 6. OTP -->
-<div class="sec"><div class="sec-t">OTP via Telegram</div>
+<div class="sec"><div class="sec-t">OTP via Telegram <span class="hq" onclick="showHelp('sec-otp',event)">?</span></div>
 <div class="card">
-  <div class="tr"><div><div class="tr-l">Enable phone verification at signup</div><div class="tr-d">Users verify via Telegram Gateway before creating an account</div></div>
+  <div class="tr"><div><div class="tr-l">Enable phone verification at signup <span class="hq" onclick="showHelp('OTP_ENABLED',event)">?</span></div><div class="tr-d">Users verify via Telegram Gateway before creating an account</div></div>
     <button class="tgl" id="tgl-otp" data-k="OTP_ENABLED" onclick="toggleK(this)"></button></div>
   <div class="cond" data-show="v:OTP_ENABLED:true">
-    <div class="tr"><div><div class="tr-l">Enforce — cannot skip</div></div>
+    <div class="tr"><div><div class="tr-l">Enforce — cannot skip <span class="hq" onclick="showHelp('OTP_ENFORCED',event)">?</span></div></div>
       <button class="tgl" id="tgl-otp2" data-k="OTP_ENFORCED" onclick="toggleK(this)"></button></div>
-    <div class="f" style="margin-top:8px"><label>Telegram Gateway Token</label><input data-k="TELEGRAM_GATEWAY_TOKEN"></div>
+    <div class="f" style="margin-top:8px"><label>Telegram Gateway Token <span class="hq" onclick="showHelp('TELEGRAM_GATEWAY_TOKEN',event)">?</span></label><input data-k="TELEGRAM_GATEWAY_TOKEN"></div>
   </div>
 </div>
 </div>
 
 <!-- 7. MERMAIL (conditional on MerMail service) -->
 <div class="sec cond" data-show="svc:MERMAIL">
-<div class="sec-t">MerMail</div>
+<div class="sec-t">MerMail <span class="hq" onclick="showHelp('sec-mermail',event)">?</span></div>
 <div class="card">
   <div class="chs">
     <div class="ch on" data-r="EMAIL_PROVIDER" data-v="ses" onclick="pickR(this)">AWS SES</div>
     <div class="ch" data-r="EMAIL_PROVIDER" data-v="postmark" onclick="pickR(this)">Postmark</div>
     <div class="ch" data-r="EMAIL_PROVIDER" data-v="smtp" onclick="pickR(this)">SMTP</div>
+    <span class="hq" onclick="showHelp('email-provider',event)">?</span>
   </div>
   <div class="cond show" data-show="v:EMAIL_PROVIDER:ses">
-    <div class="row3"><div class="f"><label>Region</label><input data-k="AWS_SES_REGION" placeholder="eu-central-1"></div><div class="f"><label>SMTP User</label><input data-k="AWS_SES_SMTP_USER"></div><div class="f"><label>SMTP Pass</label><input type="password" data-k="AWS_SES_SMTP_PASS"></div></div>
+    <div class="row3"><div class="f"><label>Region <span class="hq" onclick="showHelp('AWS_SES_REGION',event)">?</span></label><input data-k="AWS_SES_REGION" placeholder="eu-central-1"></div><div class="f"><label>SMTP User <span class="hq" onclick="showHelp('AWS_SES_SMTP_USER',event)">?</span></label><input data-k="AWS_SES_SMTP_USER"></div><div class="f"><label>SMTP Pass <span class="hq" onclick="showHelp('AWS_SES_SMTP_PASS',event)">?</span></label><input type="password" data-k="AWS_SES_SMTP_PASS"></div></div>
   </div>
-  <div class="cond" data-show="v:EMAIL_PROVIDER:postmark"><div class="f"><label>API Key</label><input data-k="POSTMARK_API_KEY"></div></div>
+  <div class="cond" data-show="v:EMAIL_PROVIDER:postmark"><div class="f"><label>API Key <span class="hq" onclick="showHelp('POSTMARK_API_KEY',event)">?</span></label><input data-k="POSTMARK_API_KEY"></div></div>
   <div class="cond" data-show="v:EMAIL_PROVIDER:smtp">
-    <div class="row"><div class="f"><label>Host</label><input data-k="SMTP_FALLBACK_HOST"></div><div class="f"><label>Port</label><input data-k="SMTP_FALLBACK_PORT" placeholder="587"></div></div>
-    <div class="row"><div class="f"><label>User</label><input data-k="SMTP_FALLBACK_USER"></div><div class="f"><label>Pass</label><input type="password" data-k="SMTP_FALLBACK_PASS"></div></div>
+    <div class="row"><div class="f"><label>Host <span class="hq" onclick="showHelp('SMTP_FALLBACK_HOST',event)">?</span></label><input data-k="SMTP_FALLBACK_HOST"></div><div class="f"><label>Port <span class="hq" onclick="showHelp('SMTP_FALLBACK_PORT',event)">?</span></label><input data-k="SMTP_FALLBACK_PORT" placeholder="587"></div></div>
+    <div class="row"><div class="f"><label>User <span class="hq" onclick="showHelp('SMTP_FALLBACK_USER',event)">?</span></label><input data-k="SMTP_FALLBACK_USER"></div><div class="f"><label>Pass <span class="hq" onclick="showHelp('SMTP_FALLBACK_PASS',event)">?</span></label><input type="password" data-k="SMTP_FALLBACK_PASS"></div></div>
   </div>
-  <div class="row" style="margin-top:8px"><div class="f"><label>DKIM Selector</label><input data-k="DKIM_SELECTOR" placeholder="melusina">
+  <div class="row" style="margin-top:8px"><div class="f"><label>DKIM Selector <span class="hq" onclick="showHelp('DKIM_SELECTOR',event)">?</span></label><input data-k="DKIM_SELECTOR" placeholder="melusina">
     <div class="h">Used for email signing — default "melusina"</div></div>
-    <div class="f"><label>Admin Token</label><input data-k="MERMAIL_ADMIN_TOKEN" placeholder="(auto-generated if empty)">
+    <div class="f"><label>Admin Token <span class="hq" onclick="showHelp('MERMAIL_ADMIN_TOKEN',event)">?</span></label><input data-k="MERMAIL_ADMIN_TOKEN" placeholder="(auto-generated if empty)">
     <div class="h">Token for Mermail admin API. Leave blank to auto-generate.</div></div></div>
 </div>
 </div>
 
-<!-- 8. MONITORING — wolfdog watchdog -->
-<div class="sec"><div class="sec-t">Monitoring</div>
+<!-- 8. MONITORING -->
+<div class="sec"><div class="sec-t">Monitoring <span class="hq" onclick="showHelp('sec-monitoring',event)">?</span></div>
 <div class="card">
-  <div class="row"><div class="f"><label>Watchdog Bot Token</label><input data-k="WATCHDOG_TG_TOKEN" placeholder="Telegram bot token for Wolfdog alerts"></div><div class="f"><label>Chat ID</label><input data-k="WATCHDOG_TG_CHAT_ID" placeholder="Telegram chat/group ID"></div></div>
-  <div class="f"><label>Admin Telegram IDs</label><input data-k="WATCHDOG_TG_ADMINS" placeholder="Comma-separated Telegram user IDs">
+  <div class="row"><div class="f"><label>Watchdog Bot Token <span class="hq" onclick="showHelp('WATCHDOG_TG_TOKEN',event)">?</span></label><input data-k="WATCHDOG_TG_TOKEN" placeholder="Telegram bot token for Wolfdog alerts"></div><div class="f"><label>Chat ID <span class="hq" onclick="showHelp('WATCHDOG_TG_CHAT_ID',event)">?</span></label><input data-k="WATCHDOG_TG_CHAT_ID" placeholder="Telegram chat/group ID"></div></div>
+  <div class="f"><label>Admin Telegram IDs <span class="hq" onclick="showHelp('WATCHDOG_TG_ADMINS',event)">?</span></label><input data-k="WATCHDOG_TG_ADMINS" placeholder="Comma-separated Telegram user IDs">
     <div class="h">Admins who can interact with the watchdog bot</div></div>
 </div>
 </div>
 
 <!-- 9. ADVANCED -->
-<div class="sec"><div class="sec-t">Advanced</div>
+<div class="sec"><div class="sec-t">Advanced <span class="hq" onclick="showHelp('sec-advanced',event)">?</span></div>
 <div class="card">
-  <div class="tr"><div class="tr-l">Auto-boot on restart</div><button class="tgl on" data-k="MELUSINA_AUTO_BOOT" onclick="toggleK(this)"></button></div>
-  <div class="tr"><div class="tr-l">Auto-start sidecars</div><button class="tgl on" data-k="MELUSINA_SIDECAR_AUTOSTART" onclick="toggleK(this)"></button></div>
+  <div class="tr"><div class="tr-l">Auto-boot on restart <span class="hq" onclick="showHelp('MELUSINA_AUTO_BOOT',event)">?</span></div><button class="tgl on" data-k="MELUSINA_AUTO_BOOT" onclick="toggleK(this)"></button></div>
+  <div class="tr"><div class="tr-l">Auto-start sidecars <span class="hq" onclick="showHelp('MELUSINA_SIDECAR_AUTOSTART',event)">?</span></div><button class="tgl on" data-k="MELUSINA_SIDECAR_AUTOSTART" onclick="toggleK(this)"></button></div>
   <details><summary>WireGuard, timeouts, paths &amp; networking</summary>
-    <div class="tr" style="margin-bottom:6px"><div><div class="tr-l">Auto-manage DNS records</div><div class="tr-d">Let the deployer create DNS records in the parent zone (requires API access to your DNS provider)</div></div><button class="tgl" data-k="MANAGE_ZONE_DNS" onclick="toggleK(this)"></button></div>
-    <div class="row3"><div class="f"><label>WG Port</label><input type="number" data-k="MELUSINA_WG_PORT" placeholder="51820"></div><div class="f"><label>WG Gateway IP</label><input data-k="MELUSINA_WG_AWS_IP" placeholder="10.200.0.1"></div><div class="f"><label>WG VM IP</label><input data-k="MELUSINA_WG_VM_IP" placeholder="10.200.0.2"></div></div>
-    <div class="row3"><div class="f"><label>Deploy Timeout</label><input type="number" data-k="MELUSINA_DEPLOY_TIMEOUT" placeholder="600"></div><div class="f"><label>Health Interval</label><input type="number" data-k="MELUSINA_HEALTH_INTERVAL" placeholder="30"></div><div class="f"><label>DNS TTL</label><input type="number" data-k="MELUSINA_DNS_TTL" placeholder="300"></div></div>
-    <div class="row"><div class="f"><label>MTU</label><input type="number" data-k="MELUSINA_MTU" placeholder="1420"></div><div class="f"><label>Cert Email</label><input data-k="MELUSINA_CERT_EMAIL"></div></div>
-    <div class="row"><div class="f"><label>Log Dir</label><input data-k="MELUSINA_LOG_DIR" placeholder="/var/log/melusina"></div><div class="f"><label>Backup Dir</label><input data-k="MELUSINA_BACKUP_DIR" placeholder="/mnt/backups"></div></div>
+    <div class="tr" style="margin-bottom:6px"><div><div class="tr-l">Auto-manage DNS records <span class="hq" onclick="showHelp('MANAGE_ZONE_DNS',event)">?</span></div><div class="tr-d">Let the deployer create DNS records in the parent zone (requires API access to your DNS provider)</div></div><button class="tgl" data-k="MANAGE_ZONE_DNS" onclick="toggleK(this)"></button></div>
+    <div class="row3"><div class="f"><label>WG Port <span class="hq" onclick="showHelp('MELUSINA_WG_PORT',event)">?</span></label><input type="number" data-k="MELUSINA_WG_PORT" placeholder="51820"></div><div class="f"><label>WG Gateway IP <span class="hq" onclick="showHelp('MELUSINA_WG_AWS_IP',event)">?</span></label><input data-k="MELUSINA_WG_AWS_IP" placeholder="10.200.0.1"></div><div class="f"><label>WG VM IP <span class="hq" onclick="showHelp('MELUSINA_WG_VM_IP',event)">?</span></label><input data-k="MELUSINA_WG_VM_IP" placeholder="10.200.0.2"></div></div>
+    <div class="row3"><div class="f"><label>Deploy Timeout <span class="hq" onclick="showHelp('MELUSINA_DEPLOY_TIMEOUT',event)">?</span></label><input type="number" data-k="MELUSINA_DEPLOY_TIMEOUT" placeholder="600"></div><div class="f"><label>Health Interval <span class="hq" onclick="showHelp('MELUSINA_HEALTH_INTERVAL',event)">?</span></label><input type="number" data-k="MELUSINA_HEALTH_INTERVAL" placeholder="30"></div><div class="f"><label>DNS TTL <span class="hq" onclick="showHelp('MELUSINA_DNS_TTL',event)">?</span></label><input type="number" data-k="MELUSINA_DNS_TTL" placeholder="300"></div></div>
+    <div class="row"><div class="f"><label>MTU <span class="hq" onclick="showHelp('MELUSINA_MTU',event)">?</span></label><input type="number" data-k="MELUSINA_MTU" placeholder="1420"></div><div class="f"><label>Cert Email <span class="hq" onclick="showHelp('MELUSINA_CERT_EMAIL',event)">?</span></label><input data-k="MELUSINA_CERT_EMAIL"></div></div>
+    <div class="row"><div class="f"><label>Log Dir <span class="hq" onclick="showHelp('MELUSINA_LOG_DIR',event)">?</span></label><input data-k="MELUSINA_LOG_DIR" placeholder="/var/log/melusina"></div><div class="f"><label>Backup Dir <span class="hq" onclick="showHelp('MELUSINA_BACKUP_DIR',event)">?</span></label><input data-k="MELUSINA_BACKUP_DIR" placeholder="/mnt/backups"></div></div>
   </details>
 </div>
 </div>
 
 <!-- 10. GENERATE -->
-<div class="sec"><div class="sec-t">Generate</div>
+<div class="sec"><div class="sec-t">Generate <span class="hq" onclick="showHelp('sec-generate',event)">?</span></div>
 <div class="ebar">
-  <button class="btn btn-p" onclick="generate()">⚡ Generate .env</button>
+  <button class="btn btn-p" onclick="generate()">⚡ Generate .env</button> <span class="hq" onclick="showHelp('btn-generate',event)">?</span>
   <button class="btn btn-s" onclick="copyEnv()">📋 Copy</button>
   <button class="btn btn-s" onclick="dlEnv()">💾 Download</button>
-  <button class="btn btn-s" onclick="preflight()">🔍 Preflight</button>
+  <button class="btn btn-s" onclick="preflight()">🔍 Preflight</button> <span class="hq" onclick="showHelp('btn-preflight',event)">?</span>
 </div>
 <ul class="cks" id="checks"></ul>
 <pre id="env-out"></pre>
 </div>
 
+</div><!-- /.w-main -->
+<div class="w-help">
+  <div class="help-panel" id="help-panel">
+    <div class="hp-title">Help</div>
+    <div id="hp-content"><div class="hp-empty">Click any <span class="hq" style="pointer-events:none">?</span> to see an explanation.</div></div>
+  </div>
+</div>
 </div><!-- /.w -->
 <div id="toast"></div>
 
+
 <script>
 'use strict';
+
+// ═══════════════ HELP DICTIONARY ═══════════════
+const HELP={
+  // -- Section: Domain --
+  'sec-domain':'<p>The domain where your Melusina instance will be accessible. This is the URL your users will visit.</p><p>Example: <code>app.mycompany.com</code> or <code>melusina.example.org</code></p>',
+  'MELUSINA_DOMAIN':'<p>The fully-qualified domain name (FQDN) for your deployment.</p><p>If your reseller gave you a subdomain like <code>yourname.reseller.com</code>, enter that. If you own <code>mycompany.com</code> and want to deploy there, enter that.</p><p>This domain will be used for TLS certificates, DNS records, and the public URL of your instance.</p>',
+  'zone-sovereignty':'<p><b>No, it\'s a subdomain</b> — Your reseller or hosting provider owns the parent domain (e.g. <code>app.theirsite.com</code>). They manage the DNS zone. Most common for buyers.</p><p><b>Yes, I own it</b> — You registered this domain yourself (e.g. <code>mycompany.com</code>) and control its DNS zone at a registrar like Cloudflare, Namecheap, etc.</p>',
+  'EXTRA_DNS':'<p>Additional DNS records to create in your zone. One per line.</p><p>Format: <code>name  type  value</code></p><p>Example:<br><code>mail A 1.2.3.4</code><br><code>_dmarc TXT "v=DMARC1; p=none"</code></p><p>Leave blank if you don\'t need extra records.</p>',
+
+  // -- Section: Reseller & Network --
+  'sec-reseller':'<p>Choose which Solana network to use and select the reseller who sold you a license.</p><p>Resellers are verified on-chain via NFTs — pick yours from the list after fetching.</p>',
+  'BLOCKCHAIN_NETWORK':'<p><b>Devnet</b> — Solana test network. Free to use, no real money. Use this for testing and development.</p><p><b>Mainnet</b> — Solana production network. Real SOL required. Use for production deployments.</p>',
+  'reseller-list':'<p>The list of authorized resellers, fetched from the on-chain registry. Each reseller holds an NFT that proves they\'re authorized to sell Melusina licenses.</p><p>Click on your reseller to select them. If you bought directly from Melusina, pick the top-level reseller.</p>',
+
+  // -- Section: Deploy Target --
+  'sec-target':'<p>Where will the Melusina server actually run?</p>',
+  'target-local':'<p><b>This Machine</b> — Install and run everything on the computer you\'re using right now. No SSH or remote connections needed. Best for single-server setups or testing.</p>',
+  'target-remote_from':'<p><b>Remote — Deploy From Here</b> — Your current machine is your workstation. The deploy script will SSH into a remote server and install Melusina there. You\'ll need the server\'s IP address and SSH credentials.</p>',
+  'target-remote_on':'<p><b>Carry &amp; Install</b> — Generate the .env file and package here, then physically transfer them to the target server (USB, scp, etc.) and run the installer on that machine. Good for air-gapped or restricted environments.</p>',
+
+  // -- Section: Package Source --
+  'sec-source':'<p>Where does the Melusina software package come from?</p>',
+  'source-store':'<p><b>Download from Store</b> — The deploy script will download the Melusina package from the on-chain app store. Your reseller\'s store URL is used. Requires internet access during install.</p>',
+  'source-local':'<p><b>Local Bundle</b> — Use a pre-downloaded <code>.tar.xz</code> package file. Point to the file path on disk. If left empty, the script will try to build from the local <code>sandstorm/</code> source directory.</p>',
+  'MELUSINA_SANDSTORM_BUNDLE':'<p>Path to the Sandstorm application bundle file (<code>.tar.xz</code>).</p><p>If blank, the deploy script will attempt to build from the <code>sandstorm/</code> directory in your workspace. Only needed for "Local Bundle" mode.</p>',
+
+  // -- Section: Services --
+  'sec-services':'<p>Toggle optional sidecar services on or off. Required services (Wolfdog, Backup) cannot be disabled.</p>',
+  'svc-WATCHDOG':'<p><b>Wolfdog</b> — Health monitoring and alerting. Watches all services and sends Telegram notifications if anything goes down. <em>Required — cannot be disabled.</em></p>',
+  'svc-BACKUP':'<p><b>Backup</b> — Automated encrypted daily backups. Stores snapshots so you can restore your instance. <em>Required — cannot be disabled.</em></p>',
+  'svc-MERMAIL':'<p><b>MerMail</b> — Outbound email service. Lets your Melusina instance send emails (password resets, notifications, etc.) via AWS SES, Postmark, or generic SMTP.</p>',
+  'svc-AILAGOON':'<p><b>AiLagoon</b> — Local AI proxy. Routes AI requests through a local model (Ollama/LocalAI) so you don\'t need external API keys. Keeps data private.</p>',
+  'svc-VINTAGE':'<p><b>Vintage</b> — Virtual desktop environment. Provides a browser-accessible remote desktop for your users.</p>',
+  'svc-SCREENING':'<p><b>TeleScreen</b> — Sanctions and reputation screening. Checks users/transactions against sanctions lists and risk databases.</p>',
+
+  // -- Section: Topology --
+  'sec-topology':'<p>Visual map of your deployment. The gateway node handles incoming traffic. Sidecar hosts run optional services.</p><p><b>Click</b> a node to set its IP address and SSH key. <b>Drag</b> service pills between hosts to choose where each runs.</p>',
+  'topo-add-local':'<p>Add a local sidecar host — a machine on the same network as the gateway, reachable without SSH tunneling.</p>',
+  'topo-add-remote':'<p>Add a remote sidecar host — a machine at a different location, reachable via SSH over the internet.</p>',
+
+  // -- Section: License & Identity --
+  'sec-license':'<p>Blockchain identity for your deployment. Your Solana wallet proves ownership of a license NFT that authorizes running Melusina.</p>',
+  'wallet-connect':'<p>Connect your Solana wallet (Phantom, Solflare, or Backpack) to interact with the license registry and optionally purchase a license or create a multisig.</p>',
+  'OPERATOR_WALLET':'<p>The Solana public key (base58 address) of the wallet that will operate this deployment. This wallet\'s signature is checked during boot to prove you own the license.</p><p>Auto-filled when you connect a wallet above.</p>',
+  'MELUSINA_LICENSE_NFT':'<p>The mint address of your license NFT. This is the specific edition NFT you received (or purchased) that grants you the right to run one Melusina instance.</p><p>Auto-filled after a successful purchase. If you already have one, paste the mint address.</p>',
+  'SOLANA_KEYHOLDERS':'<p>Solana wallet addresses of all people who can participate in governance (unsealing, multisig votes, etc.).</p><p>Enter one wallet address per line, or comma-separated. These become members of your Squads multisig if you create one.</p>',
+  'UNSEAL_THRESHOLD':'<p>Minimum number of keyholders required to unseal (unlock) the instance or approve multisig actions.</p><p>Example: If you have 5 keyholders and threshold is 3, any 3 of the 5 can approve. Must be ≤ total keyholders.</p>',
+  'btn-squads':'<p>Automatically creates a Squads V4 multisig on Solana using the keyholders and threshold you entered above.</p><p>A multisig is a shared wallet requiring multiple signatures to authorize transactions — used for team governance of your Melusina instance.</p><p>Your connected wallet must be one of the keyholders. The transaction costs a small fee in SOL.</p>',
+  'SQUADS_MULTISIG':'<p>The on-chain address of your Squads V4 multisig account. Auto-filled when you click "Auto-Create Squads Multisig".</p><p>If you already have an existing Squads multisig, paste its address here instead.</p>',
+  'SQUADS_VAULT':'<p>The vault (treasury) PDA of your Squads multisig. This is the address that holds funds and signs on behalf of the multisig.</p><p>Auto-derived from the multisig address. Don\'t change this unless you know what you\'re doing.</p>',
+
+  // -- Advanced/Admin --
+  'sec-advanced-admin':'<p>Internal system constants. Auto-populated with the correct values. Only change these if you\'re a developer or admin migrating to a different program.</p>',
+  'MASTER_NFT_MINT':'<p>The mint address of the Melusina Master NFT. All license editions are printed from this master. Auto-filled — do not change unless instructed.</p>',
+  'MELUSINA_PROGRAM_ID':'<p>The Solana program ID (address) of the deployed Melusina license registry smart contract. Auto-filled.</p>',
+  'MELUSINA_GOVERNANCE_ID':'<p>Optional SPL Governance program instance ID. Only needed if your deployment uses on-chain governance via Realms. Most deployments leave this blank.</p>',
+  'HELIUS_API_KEY':'<p>API key for Helius (premium Solana RPC provider). Optional — provides faster and more reliable RPC access on mainnet.</p><p>Leave blank to use the default public Solana RPC endpoint.</p>',
+  'HELIUS_RPC':'<p>Full Helius RPC URL. Auto-derived from your API key if set. Leave blank to use the default public RPC for the selected network.</p>',
+
+  // -- Section: OTP --
+  'sec-otp':'<p>Phone verification via Telegram. When enabled, users must verify their phone number through Telegram Gateway before creating an account.</p>',
+  'OTP_ENABLED':'<p>Toggle phone verification on or off. When ON, users see a phone verification step during signup.</p>',
+  'OTP_ENFORCED':'<p>When ON, verification is <b>mandatory</b> — users cannot skip it. When OFF, it\'s shown but users can choose to skip.</p>',
+  'TELEGRAM_GATEWAY_TOKEN':'<p>Your Telegram Gateway API token. Get this from <a href="https://gateway.telegram.org" target="_blank" style="color:var(--ac)">gateway.telegram.org</a> by registering your bot. Required if OTP is enabled.</p>',
+
+  // -- Section: MerMail --
+  'sec-mermail':'<p>Email sending configuration. MerMail is the outbound email sidecar — configure how it sends emails.</p>',
+  'email-provider':'<p><b>AWS SES</b> — Amazon Simple Email Service. Reliable, cheap, needs AWS credentials.<br><b>Postmark</b> — Developer-friendly transactional email. Enter your API key.<br><b>SMTP</b> — Generic SMTP server (any provider, self-hosted, etc.).</p>',
+  'AWS_SES_REGION':'<p>AWS region where your SES is configured (e.g. <code>eu-central-1</code>, <code>us-east-1</code>). Must match your SES setup.</p>',
+  'AWS_SES_SMTP_USER':'<p>SMTP username from your AWS SES credentials. Found in AWS Console → SES → SMTP Settings.</p>',
+  'AWS_SES_SMTP_PASS':'<p>SMTP password from your AWS SES credentials. This is <b>not</b> your AWS password — it\'s generated specifically for SES SMTP.</p>',
+  'POSTMARK_API_KEY':'<p>Your Postmark server API token. Found in the Postmark dashboard under your server\'s settings.</p>',
+  'SMTP_FALLBACK_HOST':'<p>Hostname of your SMTP server (e.g. <code>smtp.gmail.com</code>, <code>mail.yourdomain.com</code>).</p>',
+  'SMTP_FALLBACK_PORT':'<p>SMTP port. Common values: <b>587</b> (STARTTLS, recommended), <b>465</b> (SSL), <b>25</b> (unencrypted, not recommended).</p>',
+  'SMTP_FALLBACK_USER':'<p>Username for SMTP authentication. Usually your email address or a specific login.</p>',
+  'SMTP_FALLBACK_PASS':'<p>Password for SMTP authentication.</p>',
+  'DKIM_SELECTOR':'<p>DKIM selector for email signing. Default is <code>melusina</code>. Must match the DKIM DNS record you set up for your sending domain.</p><p>If you don\'t know what this is, leave the default.</p>',
+  'MERMAIL_ADMIN_TOKEN':'<p>API token for MerMail\'s admin endpoints. Used by other services (like Wolfdog) to send emails through MerMail.</p><p>Leave blank to auto-generate a secure random token during deployment.</p>',
+
+  // -- Section: Monitoring --
+  'sec-monitoring':'<p>Wolfdog watchdog monitors all services and sends alerts via a Telegram bot when something goes wrong.</p>',
+  'WATCHDOG_TG_TOKEN':'<p>Telegram Bot API token for alert notifications. Create a bot via <a href="https://t.me/BotFather" target="_blank" style="color:var(--ac)">@BotFather</a> and paste the token here.</p>',
+  'WATCHDOG_TG_CHAT_ID':'<p>Telegram chat or group ID where alerts are sent. Use <a href="https://t.me/userinfobot" target="_blank" style="color:var(--ac)">@userinfobot</a> to find your chat ID, or add the bot to a group and get the group ID.</p>',
+  'WATCHDOG_TG_ADMINS':'<p>Comma-separated list of Telegram user IDs who can send commands to the watchdog bot (restart services, acknowledge alerts, etc.).</p>',
+
+  // -- Section: Advanced --
+  'sec-advanced':'<p>System-level settings. The defaults work for most deployments. Only change these if you have specific infrastructure requirements.</p>',
+  'MELUSINA_AUTO_BOOT':'<p>When ON, the Melusina instance starts automatically when the server reboots. Recommended for production.</p>',
+  'MELUSINA_SIDECAR_AUTOSTART':'<p>When ON, all enabled sidecar services (MerMail, AiLagoon, etc.) start automatically alongside the main instance.</p>',
+  'MANAGE_ZONE_DNS':'<p>When ON, the deploy script will automatically create and update DNS records via your DNS provider\'s API (Cloudflare, Route53, etc.).</p><p>When OFF, you must create the DNS records manually before deploying.</p>',
+  'MELUSINA_WG_PORT':'<p>UDP port for WireGuard VPN tunnel between hosts. Default: <b>51820</b>. Change only if that port is already in use on your network.</p>',
+  'MELUSINA_WG_AWS_IP':'<p>Internal WireGuard IP for the gateway node. Default: <code>10.200.0.1</code>. This is a private IP inside the VPN tunnel, not your public IP.</p>',
+  'MELUSINA_WG_VM_IP':'<p>Internal WireGuard IP for the application VM. Default: <code>10.200.0.2</code>. Used for traffic routing inside the VPN.</p>',
+  'MELUSINA_DEPLOY_TIMEOUT':'<p>Maximum time (in seconds) to wait for the deployment to complete. Default: <b>600</b> (10 minutes). Increase for slow connections or large packages.</p>',
+  'MELUSINA_HEALTH_INTERVAL':'<p>How often (in seconds) Wolfdog checks service health. Default: <b>30</b>. Lower = faster alerts but more CPU usage.</p>',
+  'MELUSINA_DNS_TTL':'<p>Time-to-live (in seconds) for DNS records. Default: <b>300</b> (5 minutes). Lower values mean DNS changes propagate faster but cause more DNS queries.</p>',
+  'MELUSINA_MTU':'<p>Maximum Transmission Unit for WireGuard. Default: <b>1420</b>. Reduce if you see connectivity issues (some networks need 1380 or lower).</p>',
+  'MELUSINA_CERT_EMAIL':'<p>Email address for Let\'s Encrypt TLS certificate. They\'ll email you if your cert is about to expire. Doesn\'t need to be a real inbox, but helps for alerts.</p>',
+  'MELUSINA_LOG_DIR':'<p>Directory where all Melusina logs are stored. Default: <code>/var/log/melusina</code>.</p>',
+  'MELUSINA_BACKUP_DIR':'<p>Directory for encrypted backups. Default: <code>/mnt/backups</code>. Must exist and be writable. Use a mounted volume for production.</p>',
+  'MELUSINA_VM_NAME':'<p>Internal name for the Sandstorm VM instance. Default: <code>melusina</code>. Only change if running multiple instances on one host.</p>',
+
+  // -- Section: Generate --
+  'sec-generate':'<p>Generate the final <code>.env</code> file. Download it or copy to clipboard, then pass it to the deploy script.</p>',
+  'btn-generate':'<p>Combines all your settings into a deployment <code>.env</code> file. This file is the <b>only input</b> the deploy script needs.</p>',
+  'btn-copy':'<p>Copy the generated <code>.env</code> contents to your clipboard.</p>',
+  'btn-download':'<p>Download the generated <code>.env</code> as a file you can transfer to the target server.</p>',
+  'btn-preflight':'<p>Run validation checks against your configuration. Catches common mistakes (missing required fields, invalid addresses, threshold exceeding keyholder count, etc.) before you deploy.</p>',
+  'btn-import':'<p>Import an existing <code>.env</code> file to pre-fill the configurator. Useful for editing a previous deployment\'s settings.</p>',
+  'btn-reset':'<p>Clear all settings and start fresh. This resets everything to defaults.</p>',
+
+  // -- Buy box --
+  'buy-license':'<p>Purchase a Melusina license NFT on-chain. Costs 0.1 SOL on devnet. Your connected wallet pays, and a license edition NFT is minted to you automatically.</p><p>The license is tied to the domain you entered above.</p>',
+};
+
+function showHelp(key,e){
+  if(e){e.stopPropagation();e.preventDefault()}
+  document.querySelectorAll('.hq.active').forEach(q=>q.classList.remove('active'));
+  const btn=e?.currentTarget;if(btn)btn.classList.add('active');
+  const ct=document.getElementById('hp-content');
+  const txt=HELP[key];
+  if(!txt){ct.innerHTML='<div class="hp-empty">No help available for this item.</div>';return}
+  const label=key.replace(/^sec-|^svc-|^btn-|^target-|^source-/,'').replace(/[-_]/g,' ');
+  ct.innerHTML=`<div class="hp-field">${label}</div><div class="hp-body">${txt}</div>`;
+  // On mobile scroll panel into view
+  if(window.innerWidth<=900)document.getElementById('help-panel').scrollIntoView({behavior:'smooth'});
+}
 const K='mel_v8';
 const SC=[
   {id:'WATCHDOG',name:'Wolfdog',icon:'🐺',req:1},
