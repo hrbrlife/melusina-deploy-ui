@@ -177,24 +177,26 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 </div>
 
 <!-- 1. DOMAIN — the most important thing -->
-<div class="sec"><div class="sec-t">Deployment Domain <span class="hq" onclick="showHelp('sec-domain',event)">?</span></div>
+<div class="sec"><div class="sec-t">Choose Your Subdomain <span class="hq" onclick="showHelp('sec-domain',event)">?</span></div>
 <div class="card">
-  <div class="f" id="domain-input-wrap">
-    <label>Domain <span class="hq" onclick="showHelp('MELUSINA_DOMAIN',event)">?</span></label>
-    <!-- BYOD mode (default): full domain input -->
-    <div id="domain-byod"><input data-k="MELUSINA_DOMAIN" placeholder="app.melusina-os.org" oninput="deriveDns();debounceLicenseCheck()"></div>
-    <!-- Label mode: label + .base_domain suffix -->
-    <div id="domain-label" style="display:none">
-      <div style="display:flex;align-items:center;gap:0">
-        <input id="subdomain-label-input" placeholder="myname" style="border-radius:7px 0 0 7px;border-right:none;min-width:120px;flex:1" oninput="onLabelInput(this.value)">
-        <span id="domain-suffix" style="padding:7px 12px;background:var(--s2);border:1px solid var(--bd);border-radius:0 7px 7px 0;font-size:.82rem;color:var(--dm);white-space:nowrap;font-family:monospace">.dev.pbay.app</span>
-      </div>
-      <div style="font-size:.62rem;color:var(--dm);margin-top:3px">Pick your subdomain — your reseller provides the base domain</div>
+  <!-- Big clear subdomain hero -->
+  <div id="domain-label-hero" style="text-align:center;padding:12px 0 6px">
+    <div style="font-size:.72rem;color:var(--dm);margin-bottom:8px">Your Melusina instance will be at:</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:0;max-width:420px;margin:0 auto">
+      <input id="subdomain-label-input" placeholder="myname" style="border-radius:7px 0 0 7px;border-right:none;min-width:100px;flex:1;font-size:1.05rem;padding:10px 14px;text-align:right;font-weight:600" oninput="onLabelInput(this.value)">
+      <span id="domain-suffix" style="padding:10px 14px;background:var(--s2);border:1px solid var(--bd);border-radius:0 7px 7px 0;font-size:1.05rem;color:var(--ac);white-space:nowrap;font-family:monospace;font-weight:600">.dev.pbay.app</span>
     </div>
+    <div id="domain-preview" style="font-size:.82rem;color:var(--gn);margin-top:8px;font-weight:600;min-height:1.2em"></div>
+    <div style="font-size:.62rem;color:var(--dm);margin-top:4px">Letters, numbers, and hyphens only · 3–63 characters</div>
+  </div>
+  <!-- Hidden BYOD fallback (only shown if reseller has NO base_domain) -->
+  <div id="domain-byod" style="display:none">
+    <div class="f"><label>Full Domain <span class="hq" onclick="showHelp('MELUSINA_DOMAIN',event)">?</span></label>
+    <input data-k="MELUSINA_DOMAIN" placeholder="app.melusina-os.org" oninput="deriveDns();debounceLicenseCheck()"></div>
   </div>
   <div id="dns-derived"></div>
   <div id="license-check" style="margin-top:8px"></div>
-  <div id="zone-sov-wrap">
+  <div id="zone-sov-wrap" style="display:none">
     <div style="font-size:.72rem;color:var(--dm);margin-top:10px">Do you own this domain? <span class="hq" onclick="showHelp('zone-sovereignty',event)">?</span></div>
     <div class="chs" style="margin-top:4px">
       <div class="ch on" data-r="MELUSINA_ZONE_SOVEREIGNTY" data-v="subdomain" onclick="pickR(this)" title="e.g. app.yourreseller.com — reseller controls the parent domain">No, it's a subdomain</div>
@@ -416,8 +418,8 @@ details{margin-top:10px}details summary{cursor:pointer;font-size:.74rem;color:va
 // ═══════════════ HELP DICTIONARY ═══════════════
 const HELP={
   // -- Section: Domain --
-  'sec-domain':'<p>The domain where your Melusina instance will be accessible. This is the URL your users will visit.</p><p>Example: <code>app.mycompany.com</code> or <code>melusina.example.org</code></p>',
-  'MELUSINA_DOMAIN':'<p>The domain for your deployment.</p><p><b>Subdomain mode</b>: If your reseller provides a base domain (e.g. <code>.dev.pbay.app</code>), you just pick a label like <code>myname</code> and get <code>myname.dev.pbay.app</code> — baked into your license NFT.</p><p><b>BYOD mode</b>: If the reseller has no base domain, enter a full FQDN you own, like <code>app.mycompany.com</code>.</p>',
+  'sec-domain':'<p>Pick a name for your Melusina instance. Your reseller provides the base domain — you just choose the subdomain label.</p><p>Example: you type <code>myname</code> → your instance lives at <code>myname.dev.pbay.app</code></p><p>This name is permanently baked into your license NFT on Solana.</p>',
+  'MELUSINA_DOMAIN':'<p>Your subdomain label. This gets combined with the reseller\'s base domain to form your full URL.</p><p>Example: type <code>alice</code> → <code>alice.dev.pbay.app</code></p><p><b>Rules:</b> lowercase letters, numbers, and hyphens. 3–63 characters. Must start and end with a letter or number.</p><p>Choose carefully — this is written on-chain and can\'t be changed after purchase.</p>',
   'zone-sovereignty':'<p><b>No, it\'s a subdomain</b> — Your reseller or hosting provider owns the parent domain (e.g. <code>app.theirsite.com</code>). They manage the DNS zone. Most common for buyers.</p><p><b>Yes, I own it</b> — You registered this domain yourself (e.g. <code>mycompany.com</code>) and control its DNS zone at a registrar like Cloudflare, Namecheap, etc.</p>',
   'EXTRA_DNS':'<p>Additional DNS records to create in your zone. One per line.</p><p>Format: <code>name  type  value</code></p><p>Example:<br><code>mail A 1.2.3.4</code><br><code>_dmarc TXT "v=DMARC1; p=none"</code></p><p>Leave blank if you don\'t need extra records.</p>',
 
@@ -887,17 +889,17 @@ async function checkDomainLicense(){
         ?`<div style="font-size:.72rem;color:var(--gn);margin-bottom:6px">✓ Wallet connected: <span class="mono">${cw.pub.slice(0,4)}…${cw.pub.slice(-4)}</span></div>`
         :`<div style="margin-bottom:8px"><div style="font-size:.68rem;color:var(--or);margin-bottom:4px">Connect your wallet to buy:</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="wb" onclick="connectW('phantom')">👻 Phantom</button><button class="wb" onclick="connectW('solflare')">🔆 Solflare</button><button class="wb" onclick="connectW('backpack')">🎒 Backpack</button></div></div>`;
       const buyInfo=selR&&selR.price>0
-        ?`<div class="buy-box"><div class="buy-t">💳 Buy License</div>
-           <div class="buy-d">One-click license for <b>${esc(dom)}</b> via <b>${esc(selR.name)}</b></div>
+        ?`<div class="buy-box"><div class="buy-t">💳 Buy License for <span style="font-family:monospace;color:var(--tx)">${esc(dom)}</span></div>
+           <div class="buy-d">${selR.baseDomain?'Subdomain permanently registered on Solana via':'License via'} <b>${esc(selR.name)}</b></div>
            <div class="buy-p">${(selR.price/1e9).toFixed(2)} SOL</div>
            ${walletStatus}
            <div id="edition-status" style="font-size:.68rem;color:var(--dm);margin-bottom:6px">Checking available editions…</div>
-           <button class="buy-btn" onclick="purchaseLicense()"${cw?'':' disabled'}>🛒 Buy License — ${(selR.price/1e9).toFixed(2)} SOL</button>
+           <button class="buy-btn" onclick="purchaseLicense()"${cw?'':' disabled'}>🛒 Buy <span style="font-family:monospace">${esc(dom)}</span> — ${(selR.price/1e9).toFixed(2)} SOL</button>
            ${cw?'':'<div style="font-size:.62rem;color:var(--or);margin-top:4px">↑ Connect wallet first</div>'}</div>`
         :(!_rl.length?'<div style="font-size:.68rem;color:var(--dm);margin-top:4px">⏳ Loading resellers…</div>'
         :(S.v.RESELLER_NFT_MINT?'<div style="font-size:.68rem;color:var(--dm);margin-top:4px">Selected reseller has no price set</div>'
         :'<div style="font-size:.68rem;color:var(--dm);margin-top:4px">Select a reseller above to purchase</div>'));
-      el.innerHTML=`<div style="padding:8px 12px;background:rgba(210,153,34,.06);border:1px solid var(--or);border-radius:8px;font-size:.72rem"><span style="color:var(--or)">⚠ No license found on <b>${esc(S.v.BLOCKCHAIN_NETWORK)}</b></span></div>${buyInfo}`;
+      el.innerHTML=`<div style="padding:8px 12px;background:rgba(210,153,34,.06);border:1px solid var(--or);border-radius:8px;font-size:.72rem"><span style="color:var(--or)">⚠ <b style="font-family:monospace">${esc(dom)}</b> — no license found on ${esc(S.v.BLOCKCHAIN_NETWORK)}</span></div>${buyInfo}`;
       if(selR&&selR.price>0)updateEditionStatus();
       return}
     const d=b64d(res[0].account.data[0]),lm=rP(d,8),rm=rP(d,40),mm=rP(d,72),ed=rU(d,104);
@@ -979,13 +981,15 @@ function pickReseller(mint){const r=_rl.find(x=>x.mint===mint);
 function getSelectedReseller(){return _rl.find(r=>r.mint===S.v.RESELLER_NFT_MINT)||null}
 
 function updateDomainMode(r){
-  const byod=document.getElementById('domain-byod'),lbl=document.getElementById('domain-label');
+  const byod=document.getElementById('domain-byod'),hero=document.getElementById('domain-label-hero');
   const sovWrap=document.getElementById('zone-sov-wrap');
-  if(!byod||!lbl)return;
+  const secTitle=document.querySelector('#domain-input-wrap')?.closest('.sec')?.querySelector('.sec-t');
+  if(!byod||!hero)return;
   if(r&&r.baseDomain){
     // Label mode — reseller provides base_domain
-    byod.style.display='none';lbl.style.display='block';
+    byod.style.display='none';hero.style.display='block';
     document.getElementById('domain-suffix').textContent='.'+r.baseDomain;
+    if(secTitle)secTitle.innerHTML='Choose Your Subdomain <span class="hq" onclick="showHelp(\'sec-domain\',event)">?</span>';
     // Hide sovereignty picker — always "subdomain" in label mode
     if(sovWrap)sovWrap.style.display='none';
     S.v.MELUSINA_ZONE_SOVEREIGNTY='subdomain';
@@ -996,9 +1000,11 @@ function updateDomainMode(r){
     else if(!cur.includes('.')){inp.value=cur;} // looks like a label already
     else{inp.value='';}
     if(inp.value)onLabelInput(inp.value);
+    updateDomainPreview(inp?.value||'');
   }else{
     // BYOD mode — full domain input
-    byod.style.display='block';lbl.style.display='none';
+    hero.style.display='none';byod.style.display='block';
+    if(secTitle)secTitle.innerHTML='Deployment Domain <span class="hq" onclick="showHelp(\'sec-domain\',event)">?</span>';
     if(sovWrap)sovWrap.style.display='';
   }
 }
@@ -1014,7 +1020,18 @@ function onLabelInput(val){
   // Also update the hidden data-k input so the main env export picks it up
   const mainInp=document.querySelector('[data-k="MELUSINA_DOMAIN"]');
   if(mainInp)mainInp.value=fullDom;
+  updateDomainPreview(val);
   save();deriveDns();debounceLicenseCheck();
+}
+
+function updateDomainPreview(label){
+  const el=document.getElementById('domain-preview');if(!el)return;
+  const r=getSelectedReseller();
+  if(!label||!r||!r.baseDomain){el.innerHTML='';return;}
+  const ok=/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(label);
+  if(!ok&&label.length<3){el.innerHTML=`<span style="color:var(--dm)">Keep typing…</span>`;return;}
+  if(!ok){el.innerHTML=`<span style="color:var(--rd)">✗ Invalid label — letters, numbers, hyphens. Must start and end with a letter or number.</span>`;return;}
+  el.innerHTML=`<span style="color:var(--gn)">✓</span> <span style="color:var(--tx);font-family:monospace">${label}.${r.baseDomain}</span>`;
 }
 
 function updateStoreStatus(){const el=document.getElementById('store-status');if(!el)return;
@@ -1477,6 +1494,10 @@ function boot(){
     // Auto-select first top-level reseller if none selected
     if(!S.v.RESELLER_NFT_MINT&&_rl.length){
       const top=_rl.find(r=>r.top);if(top)pickReseller(top.mint);
+    }else if(S.v.RESELLER_NFT_MINT){
+      // Already selected — make sure domain mode matches the fetched reseller data
+      const r=_rl.find(x=>x.mint===S.v.RESELLER_NFT_MINT);
+      if(r)updateDomainMode(r);
     }
   }).catch(()=>{});
   if(S.v.MELUSINA_DOMAIN)debounceLicenseCheck();
